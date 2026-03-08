@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+/* Buttery-smooth theme transition (0.75s ease-out-expo) */
+.theme-smooth,
+.theme-smooth *,
+.theme-smooth *::before,
+.theme-smooth *::after {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke;
+  transition-duration: 0.75s;
+  transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+}
+/* Snappy hover/focus for inputs and buttons */
+.theme-smooth input,
+.theme-smooth button,
+.theme-smooth [role="button"] {
+  transition-duration: 0.25s;
+}

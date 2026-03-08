@@ -23,41 +23,77 @@ import {
   Briefcase,
   GraduationCap,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  ShieldCheck,
+  Users,
+  Settings,
+  Activity,
+  Award,
+  Building2,
+  Bus,
+  MapPin,
+  KeyRound,
+  Filter,
+  Wrench,
+  Send,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  LayoutGrid,
+  Target,
+  BookMarked
 } from 'lucide-react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+
+// Admin credentials (shared login page; these redirect to admin panel)
+const ADMIN_USERNAME = '2117240020056';
+// Roll number -> student email (for SWOT analysis; matches sql/swot_cat_marks_schema_and_data.sql)
+const STUDENT_EMAIL_BY_ROLL = { '2117240020033': 'aarav.sharma@example.com' };
+const ADMIN_PASSWORD = '9025726185';
 
 // Apple-inspired Glassy & Neon Theme Configuration
 const themes = {
   light: {
-    bg: 'bg-slate-50/50', // Very soft off-white background
-    sidebar: 'bg-white/60 backdrop-blur-2xl border-r border-white/80 shadow-[1px_0_20px_rgba(0,0,0,0.02)]',
+    bg: 'bg-slate-100/80',
+    sidebar: 'bg-white/50 backdrop-blur-2xl border-r border-white/70 shadow-[1px_0_24px_rgba(0,0,0,0.04),0_0_0_1px_rgba(255,255,255,0.6)_inset]',
     sidebarText: 'text-slate-500',
-    sidebarActive: 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] text-blue-600 border border-slate-100',
-    card: 'bg-white/70 backdrop-blur-xl border border-white shadow-[0_4px_24px_rgba(0,0,0,0.02)]',
-    cardInner: 'bg-gradient-to-br from-white/90 to-white/40',
+    sidebarActive: 'bg-white/80 shadow-[0_2px_12px_rgba(0,0,0,0.06)] text-blue-600 border border-white/80',
+    card: 'bg-white/50 backdrop-blur-2xl border border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_0_0_1px_rgba(255,255,255,0.5)_inset]',
+    cardInner: 'bg-gradient-to-br from-white/80 to-white/30',
     textPrimary: 'text-slate-800',
     textSecondary: 'text-slate-500',
     border: 'border-slate-200/50',
     warmAccent: 'text-blue-600',
     heroGradient: 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-[0_8px_30px_rgba(59,130,246,0.2)]',
     glow: '',
-    headerBg: 'bg-white/60 backdrop-blur-2xl border-b border-slate-200/50',
+    headerBg: 'bg-white/50 backdrop-blur-2xl border-b border-white/60 shadow-[0_1px_0_rgba(255,255,255,0.5)_inset]',
     neoBorder: 'border border-white/60',
   },
   dark: {
-    bg: 'bg-[#000000]', // True deep black Apple aesthetic
-    sidebar: 'bg-[#111111]/80 backdrop-blur-2xl border-r border-white/[0.05]',
+    bg: 'bg-[#000000]',
+    sidebar: 'bg-[#0d0d0d]/70 backdrop-blur-2xl border-r border-white/[0.06] shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]',
     sidebarText: 'text-slate-400',
-    sidebarActive: 'bg-[#1c1c1e] text-blue-400 shadow-[0_0_20px_rgba(56,189,248,0.15)] border border-white/[0.08]',
-    card: 'bg-[#111111]/80 backdrop-blur-xl border border-white/[0.05] shadow-[0_8px_32px_rgba(0,0,0,0.5)]',
-    cardInner: 'bg-gradient-to-br from-white/[0.04] to-transparent',
+    sidebarActive: 'bg-white/[0.08] text-blue-400 shadow-[0_0_20px_rgba(56,189,248,0.12)] border border-white/[0.08]',
+    card: 'bg-[#0d0d0d]/60 backdrop-blur-2xl border border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.04)_inset]',
+    cardInner: 'bg-gradient-to-br from-white/[0.05] to-transparent',
     textPrimary: 'text-slate-100',
     textSecondary: 'text-slate-400',
     border: 'border-white/[0.05]',
     warmAccent: 'text-blue-400',
     heroGradient: 'bg-gradient-to-br from-[#1a1a2e] to-[#0f172a] border border-blue-500/20 shadow-[0_0_40px_rgba(59,130,246,0.15)] relative overflow-hidden',
     glow: 'shadow-[0_0_15px_rgba(59,130,246,0.4)]',
-    headerBg: 'bg-[#000000]/80 backdrop-blur-2xl border-b border-white/[0.05]',
+    headerBg: 'bg-[#000000]/70 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]',
     neoBorder: 'border border-white/[0.08]',
   }
 };
@@ -920,6 +956,183 @@ const AcademicFeeContent = ({ currentTheme, darkMode }) => {
   );
 };
 
+const SWOT_API_BASE = 'http://127.0.0.1:5000';
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const email = studentEmail || 'aarav.sharma@example.com';
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${SWOT_API_BASE}/api/swot/result?email=${encodeURIComponent(email)}`);
+        if (!res.ok) {
+          if (res.status === 404) setError('No analysis run yet. Ask admin to run SWOT analysis.');
+          else setError('Could not load your SWOT result.');
+          setData(null);
+          return;
+        }
+        const json = await res.json();
+        if (!cancelled) setData(json);
+      } catch (e) {
+        if (!cancelled) setError('Cannot reach analysis server. Ensure API is running (python api_server.py).');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [email]);
+
+  const glassCard = `bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06),0_0_0_1px_rgba(255,255,255,0.4)_inset] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-6`;
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-10 md:pt-4 max-w-7xl mx-auto w-full flex items-center justify-center min-h-[400px]">
+        <div className={`${glassCard} flex items-center gap-4 ${currentTheme.textPrimary}`}>
+          <Activity size={32} className="animate-pulse text-blue-500" />
+          <span>Loading your SWOT analysis...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="p-4 md:p-10 md:pt-4 max-w-7xl mx-auto w-full flex items-center justify-center min-h-[400px]">
+        <div className={`${glassCard} max-w-md text-center ${currentTheme.textPrimary}`}>
+          <AlertTriangle size={48} className="mx-auto text-amber-500 mb-4" />
+          <p className={currentTheme.textSecondary}>{error || 'No data'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const gradeDist = data.gradeDistribution || {};
+  const gradePieData = Object.entries(gradeDist).map(([name, value]) => ({ name, value }));
+  const avgCourse = (data.avgMarksPerCourse || []).slice(0, 8);
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-7xl mx-auto w-full animate-fade-in space-y-8">
+      <div className="flex items-center gap-2">
+        <span className="w-1 h-8 rounded-full bg-blue-500" />
+        <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>My SWOT Analysis</h1>
+      </div>
+      <p className={`${currentTheme.textSecondary} text-sm`}>Performance strengths, weaknesses, and AI-backed recommendations.</p>
+
+      {/* Strengths & Weaknesses - Glass cards */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className={`${glassCard} relative overflow-hidden`}>
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent" />
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+              <TrendingUp size={22} />
+            </div>
+            <h3 className={`${currentTheme.textPrimary} font-bold text-lg`}>Strengths</h3>
+          </div>
+          <ul className="space-y-2">
+            {(data.strengths && data.strengths.length) ? data.strengths.map((s, i) => (
+              <li key={i} className={`flex items-center gap-2 ${currentTheme.textPrimary} text-sm`}>
+                <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                <span>{s}</span>
+              </li>
+            )) : <li className={`${currentTheme.textSecondary} text-sm`}>No specific strengths identified yet.</li>}
+          </ul>
+        </div>
+        <div className={`${glassCard} relative overflow-hidden`}>
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
+              <Target size={22} />
+            </div>
+            <h3 className={`${currentTheme.textPrimary} font-bold text-lg`}>Areas to Improve</h3>
+          </div>
+          <ul className="space-y-2">
+            {(data.weaknesses && data.weaknesses.length) ? data.weaknesses.map((w, i) => (
+              <li key={i} className={`flex items-center gap-2 ${currentTheme.textPrimary} text-sm`}>
+                <AlertTriangle size={16} className="text-amber-500 flex-shrink-0" />
+                <span>{w}</span>
+              </li>
+            )) : <li className={`${currentTheme.textSecondary} text-sm`}>No weaknesses identified.</li>}
+          </ul>
+        </div>
+      </div>
+
+      {/* Recommendations */}
+      {(data.recommendations && data.recommendations.length) > 0 && (
+        <div className={`${glassCard}`}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2.5 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400">
+              <BookMarked size={22} />
+            </div>
+            <h3 className={`${currentTheme.textPrimary} font-bold text-lg`}>Recommended Courses</h3>
+          </div>
+          <div className="space-y-3">
+            {data.recommendations.map((r, i) => (
+              <div key={i} className={`flex flex-wrap items-center gap-2 p-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+                <span className={`${currentTheme.textSecondary} text-sm`}>Because of low performance in</span>
+                <span className={`font-semibold ${currentTheme.textPrimary}`}>{r.weakCourse}</span>
+                <span className={currentTheme.textSecondary}>→</span>
+                <span className="text-blue-600 dark:text-blue-400 font-semibold">{r.recommendedCourse}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Charts - Glassmorphism */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className={`${glassCard}`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Grade Distribution</h3>
+          {gradePieData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={gradePieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={2}
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, value }) => `${name}: ${value}`}
+                >
+                  {gradePieData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="rgba(255,255,255,0.3)" strokeWidth={1} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className={`${currentTheme.textSecondary} text-sm py-8 text-center`}>No grade data</p>
+          )}
+        </div>
+        <div className={`${glassCard}`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Average Marks by Course</h3>
+          {avgCourse.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={avgCourse} margin={{ top: 8, right: 8, left: 0, bottom: 24 }}>
+                <XAxis dataKey="course" tick={{ fontSize: 10 }} tickFormatter={(v) => v.length > 12 ? v.slice(0, 12) + '…' : v} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)' }} formatter={(v) => [v, 'Avg']} />
+                <Bar dataKey="avgMark" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Avg Mark" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className={`${currentTheme.textSecondary} text-sm py-8 text-center`}>No course data</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SignInPage = ({ onSignIn }) => {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
@@ -927,24 +1140,35 @@ const SignInPage = ({ onSignIn }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (userId === '2117240020033' && password === '0123456789') {
-      onSignIn();
+    if (userId === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      onSignIn({ isAdmin: true });
+    } else if (userId === '2117240020033' && password === '0123456789') {
+      onSignIn({ isAdmin: false, email: STUDENT_EMAIL_BY_ROLL[userId] || null });
     } else {
       setError('Invalid User ID or Password');
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-slate-900">
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-[100px]"></div>
-        <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-indigo-50/50 blur-[100px]"></div>
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-900 bg-slate-100/80 dark:bg-[#0a0a0a]">
+      {/* Glassmorphism background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-200/40 dark:bg-blue-500/10 blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-indigo-200/40 dark:bg-indigo-500/10 blur-[120px]"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full bg-white/5 dark:bg-white/[0.02] blur-3xl"></div>
       </div>
-      <div className="max-w-md w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-[32px] p-8 md:p-10 relative overflow-hidden z-10 animate-fade-in">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-white/40 opacity-50"></div>
+      {/* Glassmorphism card */}
+      <div className="max-w-md w-full relative z-10 animate-fade-in
+        bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl
+        border border-white/60 dark:border-white/10
+        shadow-[0_8px_32px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.5)_inset]
+        dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset]
+        rounded-[32px] p-8 md:p-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-white/10 dark:from-white/[0.08] dark:to-transparent opacity-90" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent" />
         <div className="relative z-10">
           <div className="flex justify-center mb-8">
-            <div className="w-16 h-16 rounded-[20px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-[0_8px_16px_rgba(59,130,246,0.25)]">
+            <div className="w-16 h-16 rounded-[20px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-[0_8px_24px_rgba(59,130,246,0.35)] border border-white/20">
               <svg viewBox="0 0 100 100" className="w-8 h-8 fill-white drop-shadow-md">
                 <path d="M25 25 L75 25 L75 75 L25 75 Z" stroke="white" strokeWidth="8" fill="none" rx="10" />
                 <text x="50" y="66" textAnchor="middle" fontSize="42" fill="white" fontWeight="800" fontFamily="sans-serif">R</text>
@@ -953,30 +1177,30 @@ const SignInPage = ({ onSignIn }) => {
           </div>
 
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Welcome Back</h2>
-            <p className="text-slate-500 text-sm mt-2 font-medium">Please sign in to access your RIT IMS portal</p>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Welcome Back</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">Sign in to RIT IMS — students or admin</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-1">User ID</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pl-1">User ID</label>
               <input
                 type="text"
                 value={userId}
                 onChange={(e) => { setUserId(e.target.value); setError(''); }}
                 placeholder="Enter your User ID"
-                className="w-full bg-white/50 border border-slate-200/50 rounded-2xl py-4 px-5 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all shadow-sm"
+                className="w-full bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-white/50 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400/50 transition-all shadow-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-1">Password</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pl-1">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(''); }}
                 placeholder="Enter your password"
-                className="w-full bg-white/50 border border-slate-200/50 rounded-2xl py-4 px-5 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all shadow-sm"
+                className="w-full bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-white/50 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400/50 transition-all shadow-sm"
               />
             </div>
 
@@ -984,7 +1208,7 @@ const SignInPage = ({ onSignIn }) => {
 
             <button
               type="submit"
-              className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold tracking-wide shadow-[0_8px_20px_rgba(37,99,235,0.3)] hover:shadow-[0_8px_25px_rgba(37,99,235,0.4)] hover:-translate-y-0.5 transition-all outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4"
+              className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold tracking-wide shadow-[0_8px_24px_rgba(37,99,235,0.35)] hover:shadow-[0_8px_28px_rgba(37,99,235,0.45)] hover:-translate-y-0.5 transition-all outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4 border border-white/20"
             >
               Sign In
             </button>
@@ -995,8 +1219,492 @@ const SignInPage = ({ onSignIn }) => {
   );
 };
 
+// RIT Digital Twin | Smart Campus - Admin Panel (reference-based design)
+const ADMIN_NAV = [
+  { id: 'placements', label: 'Placements', icon: Briefcase },
+  { id: 'courseData', label: 'Course Data', icon: BookOpen },
+  { id: 'swot', label: 'SWOT Analysis', icon: Activity },
+  { id: 'audit', label: 'Audit Logs', icon: FileText },
+  { id: 'timetables', label: 'Exam Timetables', icon: Calendar },
+  { id: 'results', label: 'Results', icon: BarChart3 },
+  { id: 'substitutions', label: 'Class Substitutions', icon: Users },
+  { id: 'certificate', label: 'Certificate', icon: Award },
+  { id: 'classroom', label: 'Classroom Allocation', icon: LayoutGrid },
+  { id: 'energy', label: 'Energy Optimization', icon: Zap },
+  { id: 'transport', label: 'Transport Analytics', icon: Bus },
+  { id: 'directory', label: 'Transport Directory', icon: MapPin },
+  { id: 'crowd', label: 'Crowd Flow', icon: Users },
+  { id: 'password', label: 'Change Password', icon: KeyRound },
+];
+
+const AdminPanel = ({ onLogout, darkMode, onToggleTheme }) => {
+  const [activeSection, setActiveSection] = useState('classroom');
+  const [navSearch, setNavSearch] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const currentTheme = darkMode ? themes.dark : themes.light;
+
+  return (
+    <div className={`theme-smooth min-h-screen ${currentTheme.bg} font-sans flex`}>
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-[100px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-0' : 'opacity-100'}`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-indigo-50/50 blur-[100px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-0' : 'opacity-100'}`} />
+        <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-100' : 'opacity-0'}`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-indigo-900/20 blur-[120px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-100' : 'opacity-0'}`} />
+      </div>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />}
+
+      {/* RIT-style Sidebar - Dark glass */}
+      <aside className={`w-64 flex-shrink-0 fixed h-full z-50 flex flex-col transform transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-slate-900/90' : 'bg-slate-800/95'} backdrop-blur-2xl border-r border-white/10`}>
+        <div className="p-4 border-b border-white/10">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center">
+              <div className="w-4 h-4 rounded-full bg-amber-500" />
+            </div>
+            <span className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-white'}`}>rit</span>
+          </div>
+          <p className={`text-[10px] uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-300'}`}>Rajalakshmi Institute of Technology</p>
+        </div>
+        <div className="p-3 border-b border-white/10">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search functionalities..."
+              value={navSearch}
+              onChange={(e) => setNavSearch(e.target.value)}
+              className={`w-full pl-9 pr-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-white/5 text-slate-200 placeholder:text-slate-500 border border-white/5' : 'bg-white/10 text-white placeholder:text-slate-400 border-white/10'} focus:outline-none focus:ring-1 focus:ring-amber-500/50`}
+            />
+          </div>
+        </div>
+        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+          {ADMIN_NAV.filter(n => !navSearch || n.label.toLowerCase().includes(navSearch.toLowerCase())).map((item) => {
+            const isActive = activeSection === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg text-left text-sm transition-colors border-l-2 ${isActive ? 'border-l-amber-500' : 'border-l-transparent'} ${isActive
+                  ? darkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-white/15 text-white'
+                  : `${darkMode ? 'text-slate-400 hover:bg-white/5 hover:text-slate-200' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}`}
+              >
+                <Icon size={18} strokeWidth={2} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Main layout */}
+      <div className="flex-1 flex flex-col md:ml-64 min-h-screen">
+        {/* RIT-style Header */}
+        <header className={`sticky top-0 z-40 ${currentTheme.headerBg} backdrop-blur-2xl border-b ${currentTheme.border} px-4 md:px-6 h-16 flex items-center justify-between`}>
+          <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"><Menu size={24} className={currentTheme.textPrimary} /></button>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center overflow-hidden">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 text-emerald-600" fill="currentColor"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" /></svg>
+            </div>
+            <span className={`font-bold text-sm tracking-tight ${currentTheme.textPrimary}`}>RAJALAKSHMI INSTITUTE OF TECHNOLOGY</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onToggleTheme}
+              aria-label="Toggle theme"
+              className={`p-2.5 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder} ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button className={`p-2.5 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder} ${currentTheme.textPrimary} relative`}>
+              <Bell size={18} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full" />
+            </button>
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder}`}>
+              <User size={18} className={currentTheme.textSecondary} />
+              <span className={`text-xs font-semibold ${currentTheme.textPrimary}`}>ADMIN@RITCHENNAI.EDU.IN</span>
+            </div>
+            <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center gap-2">
+              <MessageSquare size={16} /> Chat
+            </button>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <main className="flex-1 p-6 overflow-auto">
+          <AdminContentSection section={activeSection} currentTheme={currentTheme} darkMode={darkMode} onLogout={onLogout} />
+        </main>
+      </div>
+    </div>
+  );
+};
+
+// Content sections based on RIT reference images
+const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
+  const [swotRunning, setSwotRunning] = useState(false);
+  const [swotMessage, setSwotMessage] = useState(null);
+  const [swotFile, setSwotFile] = useState(null);
+  const API_BASE = 'http://127.0.0.1:5000';
+  const runSwot = async () => {
+    setSwotRunning(true);
+    setSwotMessage(null);
+    try {
+      const formData = new FormData();
+      if (swotFile) formData.append('file', swotFile);
+      const res = await fetch(`${API_BASE}/api/swot/run`, {
+        method: 'POST',
+        body: swotFile ? formData : JSON.stringify({ useDefault: true }),
+        headers: swotFile ? {} : { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setSwotMessage({ type: 'success', text: `Analysis complete. Results available for ${data.studentCount || 0} students.` });
+      } else {
+        setSwotMessage({ type: 'error', text: data.error || 'Run failed' });
+      }
+    } catch (e) {
+      setSwotMessage({ type: 'error', text: 'Cannot reach API. Start the server: python api_server.py in swot-ml-model-master.' });
+    }
+    setSwotRunning(false);
+  };
+
+  if (section === 'password') {
+    return (
+      <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-8 max-w-md border ${currentTheme.neoBorder}`}>
+        <h2 className={`${currentTheme.textPrimary} text-xl font-bold mb-4`}>Change Password</h2>
+        <form className="space-y-4">
+          <div><label className={`text-xs font-bold uppercase ${currentTheme.textSecondary}`}>Current Password</label><input type="password" className={`w-full mt-1 px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} /></div>
+          <div><label className={`text-xs font-bold uppercase ${currentTheme.textSecondary}`}>New Password</label><input type="password" className={`w-full mt-1 px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} /></div>
+          <button type="submit" className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold">Update Password</button>
+        </form>
+      </div>
+    );
+  }
+
+  // Classroom Allocation
+  if (section === 'classroom') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <span className="w-1 h-8 rounded-full bg-amber-500" />
+          <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Infrastructure & Classroom Report</h1>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'TOTAL ROOMS', value: '48', color: 'bg-blue-500', light: 'bg-blue-500/20 text-blue-600 dark:text-blue-400' },
+            { label: 'OCCUPIED', value: '36', color: 'bg-emerald-500', light: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400', hasCheck: true },
+            { label: 'AVAILABLE', value: '12', color: 'bg-amber-500', light: 'bg-amber-500/20 text-amber-600 dark:text-amber-400' },
+            { label: 'SMART ROOMS', value: '24', color: 'bg-cyan-600', light: 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400' },
+          ].map((s, i) => (
+            <div key={i} className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder} relative overflow-hidden`}>
+              {s.hasCheck && <div className="absolute top-2 right-2"><CheckCircle2 size={18} className="text-emerald-500" /></div>}
+              <p className={`${currentTheme.textPrimary} text-2xl font-bold`}>{s.value}</p>
+              <p className={`${currentTheme.textSecondary} text-xs font-bold uppercase mt-1`}>{s.label}</p>
+              <div className={`absolute bottom-0 right-0 w-20 h-20 rounded-tl-full ${s.color} opacity-10`} />
+            </div>
+          ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold text-lg mb-4`}>Allocation Simulation</h3>
+            <div className="space-y-4">
+              <div><label className={`text-xs font-bold uppercase ${currentTheme.textSecondary}`}>Department</label><select className={`w-full mt-1 px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`}><option>Select Dept...</option></select></div>
+              <div><label className={`text-xs font-bold uppercase ${currentTheme.textSecondary}`}>Strength</label><input type="text" defaultValue="60" className={`w-full mt-1 px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} /></div>
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" /> <span className={currentTheme.textPrimary}>Smart Projector</span></label>
+            </div>
+            <button className="mt-4 w-full py-3 rounded-xl bg-blue-600 text-white font-semibold">Run Algorithm</button>
+          </div>
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder} flex flex-col items-center justify-center min-h-[200px]`}>
+            <Building2 size={48} className={`${currentTheme.textSecondary} opacity-40 mb-2`} />
+            <p className={`${currentTheme.textSecondary} text-sm`}>Run simulation to see recommendations</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Certificate Queue
+  if (section === 'certificate') {
+    const certData = [
+      { name: 'Aakash S', id: 101, type: 'Bonafide', date: '2026-03-05', att: 88, fees: true, risk: 'LOW' },
+      { name: 'Sneha R', id: 102, type: 'Course Completion', date: '2026-03-06', att: 72, fees: true, risk: 'MEDIUM' },
+      { name: 'Vikram K', id: 103, type: 'Fee Receipt', date: '2026-03-06', att: 95, fees: false, risk: 'HIGH' },
+      { name: 'Priya M', id: 104, type: 'Transfer Cert', date: '2026-03-07', att: 92, fees: true, risk: 'LOW' },
+    ];
+    return (
+      <div className="space-y-6">
+        <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Certificate Queue</h1>
+        <p className={`${currentTheme.textSecondary} text-sm`}>Batch process document requests with automated compliance checks</p>
+        <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold"><Wrench size={18} /> Manual Override</button>
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input placeholder="Search student or certificate..." className={`w-full pl-10 pr-4 py-2.5 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+          </div>
+          <button className={`px-4 py-2.5 rounded-xl ${currentTheme.card} ${currentTheme.neoBorder} flex items-center gap-2 ${currentTheme.textPrimary}`}><Filter size={18} /> Filter</button>
+        </div>
+        <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl overflow-hidden border ${currentTheme.neoBorder}`}>
+          <table className="w-full text-sm">
+            <thead className={`${currentTheme.bg} border-b ${currentTheme.border}`}>
+              <tr><th className="p-4 text-left font-bold uppercase text-xs"><input type="checkbox" /></th><th className="p-4 text-left font-bold uppercase text-xs">STUDENT</th><th className="p-4 text-left font-bold uppercase text-xs">REQUEST TYPE</th><th className="p-4 text-left font-bold uppercase text-xs">APPLIED ON</th><th className="p-4 text-left font-bold uppercase text-xs">COMPLIANCE (AI)</th><th className="p-4 text-left font-bold uppercase text-xs">RISK</th><th className="p-4 text-left font-bold uppercase text-xs">ACTION</th></tr>
+            </thead>
+            <tbody>
+              {certData.map((r, i) => (
+                <tr key={i} className={`border-b ${currentTheme.border} hover:bg-black/5 dark:hover:bg-white/5`}>
+                  <td className="p-4"><input type="checkbox" /></td>
+                  <td className="p-4"><div>{r.name}</div><div className={`text-xs ${currentTheme.textSecondary}`}>ID: {r.id}</div></td>
+                  <td className="p-4">{r.type}</td>
+                  <td className="p-4">{r.date}</td>
+                  <td className="p-4"><span className={r.att >= 75 ? 'text-emerald-600' : 'text-red-500'}>{r.att >= 75 ? <CheckCircle2 size={14} className="inline" /> : <XCircle size={14} className="inline" />} Att: {r.att}%</span> <span className={r.fees ? 'text-emerald-600' : 'text-red-500'}>{r.fees ? <CheckCircle2 size={14} className="inline" /> : <XCircle size={14} className="inline" />} Fees Clear</span></td>
+                  <td className="p-4"><span className={`px-2 py-0.5 rounded text-xs font-bold ${r.risk === 'LOW' ? 'bg-emerald-500/20 text-emerald-600' : r.risk === 'MEDIUM' ? 'bg-amber-500/20 text-amber-600' : 'bg-red-500/20 text-red-500'}`}>{r.risk}</span></td>
+                  <td className="p-4"><button className="text-blue-500 font-semibold hover:underline">Details</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  // Result Publication Portal
+  if (section === 'results') {
+    return (
+      <div className="space-y-6">
+        <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Result Publication Portal</h1>
+        <p className={`${currentTheme.textSecondary} text-sm`}>Monitor faculty uploads and trigger global AI verification.</p>
+        <div className="flex gap-3">
+          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold"><TrendingUp size={18} /> Run AI Audit</button>
+          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold"><Send size={18} /> Publish Globally</button>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            { title: 'OVERALL PROGRESS', value: '82%', sub: '3/4 Depts Uploaded', icon: TrendingUp, color: 'text-blue-500' },
+            { title: 'AI ANOMALY CHECK', value: 'PENDING', sub: 'Requires Audit', icon: CheckCircle2, color: 'text-amber-500' },
+            { title: 'PENDING SIGNATURE', value: 'Principal', sub: 'Final sign-off required', icon: AlertTriangle, color: 'text-amber-500' },
+          ].map((c, i) => (
+            <div key={i} className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+              <div className="flex justify-between items-start"><span className={`${currentTheme.textPrimary} font-bold text-lg`}>{c.value}</span><c.icon size={20} className={c.color} /></div>
+              <p className={`${currentTheme.textSecondary} text-xs mt-1`}>{c.sub}</p>
+              <p className={`${currentTheme.textSecondary} text-xs font-bold uppercase mt-2`}>{c.title}</p>
+            </div>
+          ))}
+        </div>
+        <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl overflow-hidden border ${currentTheme.neoBorder}`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold p-4 border-b ${currentTheme.border}`}>Departmental Upload Status</h3>
+          <table className="w-full text-sm">
+            <thead className={`${currentTheme.bg}`}><tr><th className="p-4 text-left font-bold uppercase text-xs">DEPARTMENT</th><th className="p-4 text-left font-bold uppercase text-xs">PROGRESS</th><th className="p-4 text-left font-bold uppercase text-xs">STATUS</th><th className="p-4 text-left font-bold uppercase text-xs">AI ANOMALIES</th><th className="p-4 text-left font-bold uppercase text-xs">ACTION</th></tr></thead>
+            <tbody>
+              {['Computer Science', 'Information Technology', 'Electronics Engineering', 'Mechanical Engineering'].map((d, i) => (
+                <tr key={i} className={`border-b ${currentTheme.border}`}>
+                  <td className="p-4 font-medium">{d}</td>
+                  <td className="p-4"><div className="h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden"><div className="h-full bg-emerald-500 rounded-full" style={{ width: i === 0 ? '100%' : '60%' }} /></div></td>
+                  <td className="p-4"><span className={i === 0 ? 'text-emerald-600' : 'text-amber-500'}>{i === 0 ? 'READY' : 'PENDING'}</span></td>
+                  <td className="p-4">{i === 0 ? 'No Anomaly' : <span className="text-red-500">{i + 1} Issues</span>}</td>
+                  <td className="p-4"><button className="text-blue-500 font-semibold">Review Data</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  // Course Data — admin places course list used for SWOT analysis (from CAT marks subjects)
+  const SWOT_COURSES = [
+    { code: 'AL23432', name: 'Machine Learning Techniques', faculty: 'ARAVINDH S' },
+    { code: 'CS23415', name: 'Operating Systems', faculty: 'SOWMYA S' },
+    { code: 'CS23411', name: 'Database Management Systems', faculty: 'PANDIARAJAN T.' },
+    { code: 'CS23413', name: 'Theory of Computation', faculty: 'ANGALAPARAMESWARI ANBAZHAGAN' },
+    { code: 'CS23414', name: 'Software Development Practices', faculty: 'SRINIVASAN M.L.' },
+    { code: 'CS23431', name: 'Design and Analysis of Algorithms', faculty: 'MURUGAN P' },
+  ];
+  if (section === 'courseData') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <span className="w-1 h-8 rounded-full bg-amber-500" />
+          <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Course Data for SWOT Analysis</h1>
+        </div>
+        <p className={`${currentTheme.textSecondary} text-sm`}>These courses are used for SWOT analysis. Student CAT marks for these subjects are combined to produce strengths, weaknesses, and recommendations. Ensure the database is seeded with this course list and student CAT marks (see <code className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs">sql/swot_cat_marks_schema_and_data.sql</code>).</p>
+        <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl overflow-hidden border ${currentTheme.neoBorder}`}>
+          <table className="w-full text-sm">
+            <thead className={`${currentTheme.bg} border-b ${currentTheme.border}`}>
+              <tr>
+                <th className="p-4 text-left font-bold uppercase text-xs">Course Code</th>
+                <th className="p-4 text-left font-bold uppercase text-xs">Course Name</th>
+                <th className="p-4 text-left font-bold uppercase text-xs">Faculty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SWOT_COURSES.map((c, i) => (
+                <tr key={c.code} className={`border-b ${currentTheme.border} hover:bg-black/5 dark:hover:bg-white/5`}>
+                  <td className="p-4 font-mono font-semibold text-blue-600 dark:text-blue-400">{c.code}</td>
+                  <td className={`p-4 ${currentTheme.textPrimary}`}>{c.name}</td>
+                  <td className={`p-4 ${currentTheme.textSecondary} text-xs uppercase`}>{c.faculty}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className={`${currentTheme.textSecondary} text-xs`}>To run analysis: export CAT marks from the database into the CSV format expected by the SWOT API (Course ID, Course Name, Candidate Email, Mark, Grade, Date_of_Attempt), or use the provided SQL seed file and run the export query before uploading in the SWOT Analysis section.</p>
+      </div>
+    );
+  }
+
+  // SWOT Analysis (ML model integration)
+  if (section === 'swot') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <span className="w-1 h-8 rounded-full bg-amber-500" />
+          <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>SWOT & ML Performance Analysis</h1>
+        </div>
+        <p className={`${currentTheme.textSecondary} text-sm`}>Run the ML model on performance data (from student CAT marks). Ensure Course Data is set and data is exported to CSV. Results will appear in the student panel for each student.</p>
+        <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Run Analysis</h3>
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary} block mb-2`}>Upload CSV (optional)</label>
+              <input type="file" accept=".csv" onChange={(e) => setSwotFile(e.target.files?.[0] || null)} className={`text-sm ${currentTheme.textPrimary}`} />
+            </div>
+            <button onClick={runSwot} disabled={swotRunning} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-60 flex items-center gap-2">
+              <Activity size={18} /> {swotRunning ? 'Running...' : 'Run SWOT & ML Analysis'}
+            </button>
+          </div>
+          {swotMessage && (
+            <p className={`mt-4 text-sm ${swotMessage.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>{swotMessage.text}</p>
+          )}
+          <p className={`${currentTheme.textSecondary} text-xs mt-4`}>Uses data.csv by default if no file is uploaded. Ensure the API server is running (python api_server.py in swot-ml-model-master).</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Energy Optimization
+  if (section === 'energy') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <span className="w-1 h-8 rounded-full bg-amber-500" />
+          <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Campus Energy Optimization Report</h1>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'REAL-TIME LOAD', value: '265 kW', color: 'bg-blue-500' },
+            { label: 'PEAK DAILY', value: '800 kW', color: 'bg-amber-500' },
+            { label: 'SOLAR OUTPUT', value: '50 kW', color: 'bg-emerald-500' },
+            { label: 'GRID IMPORT', value: '199 kW', color: 'bg-red-500' },
+          ].map((k, i) => (
+            <div key={i} className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder} text-white relative overflow-hidden`}>
+              <p className="text-2xl font-bold relative z-10">{k.value}</p>
+              <p className="text-white/80 text-xs font-bold uppercase mt-1 relative z-10">{k.label}</p>
+              <div className={`absolute inset-0 ${k.color} opacity-90`} />
+            </div>
+          ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <div className="flex justify-between items-center mb-4"><h3 className={`${currentTheme.textPrimary} font-bold`}>Energy Consumption Pattern</h3><span className="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-600 text-xs font-bold">LIVE</span></div>
+            <div className="h-48 rounded-xl bg-amber-500/10 flex items-center justify-center"><span className={`${currentTheme.textSecondary} text-sm`}>Chart placeholder (04:00 - 22:29)</span></div>
+          </div>
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-2`}>Energy Optimization Simulation</h3>
+            <p className={`${currentTheme.textSecondary} text-sm mb-4`}>Analyse building-specific sensor data to optimise load distribution and maximise the integration of renewable energy sources.</p>
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 text-white font-semibold">Execute Analysis</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Faculty Substitution
+  if (section === 'substitutions') {
+    return (
+      <div className="space-y-6">
+        <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Faculty Substitution Panel</h1>
+        <p className={`${currentTheme.textSecondary} text-sm`}>AI-driven clash detection and substitution matching</p>
+        <button className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold">+ Mark Bulk Absence</button>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Today&apos;s Absent Faculty</h3>
+            <div className="space-y-3">
+              {['Dr. Ramesh K (CS) - Period P1, P4', 'Prof. Anitha S (IT) - Period P2'].map((f, i) => (
+                <div key={i} className={`flex justify-between items-center p-3 rounded-xl ${currentTheme.bg}`}><span className={currentTheme.textPrimary}>{f}</span><span className="px-2 py-0.5 rounded bg-red-500/20 text-red-600 text-xs font-bold">{i === 0 ? 'Medical' : 'External OD'}</span></div>
+              ))}
+            </div>
+          </div>
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>AI Top Matches for P1 (CS)</h3>
+            <div className="space-y-3">
+              {['Prof. Senthil: 12 hrs/wk | Data Structures, 95%', 'Dr. Mary J: 15 hrs/wk | Operating Systems, 88%', 'Mr. Vignesh: 10 hrs/wk | Programming, 82%'].map((m, i) => (
+                <div key={i} className={`flex justify-between items-center p-3 rounded-xl ${currentTheme.bg}`}><span className={currentTheme.textPrimary}>{m}</span><button className="text-blue-500 font-semibold">Assign</button></div>
+              ))}
+            </div>
+            <button className="mt-4 w-full py-2.5 rounded-xl bg-blue-600 text-white font-semibold">Notify All Substitutes via WhatsApp</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Transport Analytics
+  if (section === 'transport') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div><h1 className={`${currentTheme.textPrimary} text-2xl font-bold flex items-center gap-2`}><Bus size={24} /> Institutional Fleet Intelligence</h1><p className={`${currentTheme.textSecondary} text-sm mt-1`}>Evaluating fleet dynamics, fuel economics, and residential cluster distributions.</p></div>
+          <div className="flex gap-2"><button className={`px-4 py-2 rounded-xl ${currentTheme.card} ${currentTheme.neoBorder} ${currentTheme.textPrimary} font-semibold`}>Network Map</button><button className="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold">Optimise All</button></div>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            { label: 'ACTIVE ROUTES', value: '12', sub: 'Across Campus Network' },
+            { label: 'TOTAL STUDENTS', value: '2,800', sub: 'Bus Commuters' },
+            { label: 'TARGET EFFICIENCY', value: '20%', sub: 'Projected Fuel Savings Goal' },
+          ].map((c, i) => (
+            <div key={i} className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder} text-white relative overflow-hidden`}>
+              <p className="text-2xl font-bold relative z-10">{c.value}</p>
+              <p className="text-white/80 text-xs mt-1 relative z-10">{c.sub}</p>
+              <p className="text-white/60 text-[10px] font-bold uppercase mt-2 relative z-10">{c.label}</p>
+              <div className={`absolute inset-0 ${i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-emerald-500' : 'bg-amber-500'} opacity-90`} />
+            </div>
+          ))}
+        </div>
+        <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Simulation Parameters</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div><label className={`text-xs ${currentTheme.textSecondary}`}>Routes</label><p className={currentTheme.textPrimary}>12</p></div>
+            <div><label className={`text-xs ${currentTheme.textSecondary}`}>Total Students</label><p className={currentTheme.textPrimary}>2800</p></div>
+            <div><label className={`text-xs ${currentTheme.textSecondary}`}>Fuel Cost (₹/L)</label><p className={currentTheme.textPrimary}>100</p></div>
+            <div><label className={`text-xs ${currentTheme.textSecondary}`}>Optimization (%)</label><p className={currentTheme.textPrimary}>20</p></div>
+          </div>
+          <label className="flex items-center gap-2 mb-4"><input type="checkbox" defaultChecked /> <span className={currentTheme.textPrimary}>EV Scenario</span></label>
+          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold"><Bus size={18} /> Run Predictive Network Analysis</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Placements, Audit, Timetables, Directory, Crowd - placeholder
+  const placeholders = { placements: 'Placements', audit: 'Audit Logs', timetables: 'Exam Timetables', directory: 'Transport Directory', crowd: 'Crowd Flow' };
+  const title = placeholders[section] || 'Dashboard';
+  return (
+    <div className="space-y-6">
+      <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>{title}</h1>
+      <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-12 border ${currentTheme.neoBorder} flex flex-col items-center justify-center min-h-[300px]`}>
+        <LayoutDashboard size={64} className={`${currentTheme.textSecondary} opacity-40 mb-4`} />
+        <p className={`${currentTheme.textSecondary} text-center`}>Module coming soon. Select a section from the sidebar.</p>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [studentEmail, setStudentEmail] = useState(null);
   const [darkMode, setDarkMode] = useState(true); // Defaulting to true as requested to see neon
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -1023,6 +1731,7 @@ const App = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard' },
+    { icon: Activity, label: 'SWOT Analysis' },
     { icon: Calendar, label: 'My Timetable' },
     { icon: ClipboardList, label: 'Leave / OD' },
     { icon: UserCheck, label: 'Attendance' },
@@ -1051,25 +1760,41 @@ const App = () => {
   ];
 
   if (!isAuthenticated) {
-    return <SignInPage onSignIn={() => setIsAuthenticated(true)} />;
+    return (
+      <SignInPage
+        onSignIn={({ isAdmin: admin, email }) => {
+          setIsAuthenticated(true);
+          setIsAdmin(!!admin);
+          setStudentEmail(email || null);
+        }}
+      />
+    );
+  }
+
+  if (isAdmin) {
+    return (
+      <div className={`theme-smooth min-h-screen ${darkMode ? 'dark bg-[#000000]' : 'bg-slate-100/80'}`}>
+        <AdminPanel
+          onLogout={() => {
+            setIsAuthenticated(false);
+            setIsAdmin(false);
+          }}
+          darkMode={darkMode}
+          onToggleTheme={() => setDarkMode((d) => !d)}
+        />
+      </div>
+    );
   }
 
   return (
-    <div className={`min-h-screen ${currentTheme.bg} ${darkMode ? 'dark' : ''} flex transition-colors duration-700 font-sans selection:bg-blue-500/30 text-slate-900`}>
+    <div className={`theme-smooth min-h-screen ${currentTheme.bg} ${darkMode ? 'dark' : ''} flex font-sans selection:bg-blue-500/30 text-slate-900`}>
 
-      {/* Decorative Background Gradients for the whole app */}
+      {/* Decorative Background Gradients - crossfade for buttery theme transition */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {darkMode ? (
-          <>
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px]"></div>
-            <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-indigo-900/20 blur-[120px]"></div>
-          </>
-        ) : (
-          <>
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-[100px]"></div>
-            <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-indigo-50/50 blur-[100px]"></div>
-          </>
-        )}
+        <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-[100px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-0' : 'opacity-100'}`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-indigo-50/50 blur-[100px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-0' : 'opacity-100'}`} />
+        <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-100' : 'opacity-0'}`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-indigo-900/20 blur-[120px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-100' : 'opacity-0'}`} />
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -1081,7 +1806,7 @@ const App = () => {
       )}
 
       {/* Sidebar - Glassmorphism */}
-      <aside className={`${currentTheme.sidebar} ${isSidebarCollapsed ? 'w-0 overflow-hidden md:w-[100px]' : 'w-[280px]'} transition-all duration-500 flex flex-col fixed h-full z-50`}>
+      <aside className={`${currentTheme.sidebar} ${isSidebarCollapsed ? 'w-0 overflow-hidden md:w-[100px]' : 'w-[280px]'} transition-[width] duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] flex flex-col fixed h-full z-50`}>
 
         {/* Logo Section */}
         <div className="h-28 flex items-center px-8 relative">
@@ -1135,7 +1860,7 @@ const App = () => {
       <main className={`flex-1 flex flex-col transition-all duration-500 ${isSidebarCollapsed ? 'ml-0 md:ml-[100px]' : 'ml-0 md:ml-[280px]'} relative z-10 w-full overflow-x-hidden`}>
 
         {/* Floating Glass Header */}
-        <header className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? currentTheme.headerBg : 'bg-transparent'} px-4 md:px-6 lg:px-10 h-16 sm:h-20 lg:h-24 flex items-center justify-between gap-2`}>
+        <header className={`sticky top-0 z-40 ${scrolled ? currentTheme.headerBg : 'bg-transparent'} px-4 md:px-6 lg:px-10 h-16 sm:h-20 lg:h-24 flex items-center justify-between gap-2`}>
           <div className="flex items-center gap-6">
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -1423,12 +2148,20 @@ const App = () => {
         {activeTab === 'Academic Fee' && (
           <AcademicFeeContent currentTheme={currentTheme} darkMode={darkMode} />
         )}
+
+        {/* SWOT Analysis Content Container */}
+        {activeTab === 'SWOT Analysis' && (
+          <SwotAnalysisContent currentTheme={currentTheme} darkMode={darkMode} studentEmail={studentEmail} />
+        )}
       </main>
 
       {/* Global generic styles */}
       <style dangerouslySetInnerHTML={{
         __html: `
-        body { background-color: ${darkMode ? '#000' : '#f8fafc'}; }
+        body {
+          background-color: ${darkMode ? '#000' : '#f8fafc'};
+          transition: background-color 0.75s cubic-bezier(0.33, 1, 0.68, 1);
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         

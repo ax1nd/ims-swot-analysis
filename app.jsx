@@ -980,7 +980,7 @@ const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
         const json = await res.json();
         if (!cancelled) setData(json);
       } catch (e) {
-        if (!cancelled) setError('Cannot reach analysis server. Ensure API is running (python api_server.py).');
+        if (!cancelled) setError('Cannot reach analysis server. Run: cd ml-api && python api_server.py');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -1364,7 +1364,7 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
         setSwotMessage({ type: 'error', text: data.error || 'Run failed' });
       }
     } catch (e) {
-      setSwotMessage({ type: 'error', text: 'Cannot reach API. Start the server: python api_server.py in swot-ml-model-master.' });
+      setSwotMessage({ type: 'error', text: 'Cannot reach API. Start the server: cd ml-api && pip install -r requirements.txt && python api_server.py' });
     }
     setSwotRunning(false);
   };
@@ -1577,7 +1577,7 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
           {swotMessage && (
             <p className={`mt-4 text-sm ${swotMessage.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>{swotMessage.text}</p>
           )}
-          <p className={`${currentTheme.textSecondary} text-xs mt-4`}>Uses data.csv by default if no file is uploaded. Ensure the API server is running (python api_server.py in swot-ml-model-master).</p>
+          <p className={`${currentTheme.textSecondary} text-xs mt-4`}>Uses data.csv by default if no file is uploaded. Ensure the API server is running: from project root run <code className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs">cd ml-api &amp;&amp; python api_server.py</code></p>
         </div>
       </div>
     );

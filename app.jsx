@@ -55,6 +55,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import KuttiChatbot from './components/KuttiChatbot';
 
 // Admin credentials (shared login page; these redirect to admin panel)
 const ADMIN_USERNAME = '2117240020056';
@@ -2154,6 +2155,9 @@ const App = () => {
           <SwotAnalysisContent currentTheme={currentTheme} darkMode={darkMode} studentEmail={studentEmail} />
         )}
       </main>
+
+      {/* KUTTI – Student portal assistant chatbot */}
+      <KuttiChatbot currentTheme={currentTheme} darkMode={darkMode} />
 
       {/* Global generic styles */}
       <style dangerouslySetInnerHTML={{

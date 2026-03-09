@@ -1,0 +1,13 @@
+Course ID,Course Name,Attempt ID,Candidate Name,Candidate Email,Mark,Grade,Date_of_Attempt
+CS23411,Database Management Systems,1,Aarav Sharma,aarav.sharma@example.com,85,A,2025-03-09
+CS23415,Operating Systems,1,Aarav Sharma,aarav.sharma@example.com,65,C,2025-03-09
+CS23413,Theory of Computation,1,Aarav Sharma,aarav.sharma@example.com,75,B,2025-03-09
+CS23414,Software Development Practices,1,Aarav Sharma,aarav.sharma@example.com,45,F,2025-03-09
+AL23432,Machine Learning Techniques,1,Aarav Sharma,aarav.sharma@example.com,55,D,2025-03-09
+CS23431,Design and Analysis of Algorithms,1,Aarav Sharma,aarav.sharma@example.com,90,A,2025-03-09
+CS23411,Database Management Systems,1,John Doe,john.doe@example.com,70,B,2025-03-09
+CS23415,Operating Systems,1,John Doe,john.doe@example.com,85,A,2025-03-09
+CS23413,Theory of Computation,1,John Doe,john.doe@example.com,68,C,2025-03-09
+CS23414,Software Development Practices,1,John Doe,john.doe@example.com,88,A,2025-03-09
+AL23432,Machine Learning Techniques,1,John Doe,john.doe@example.com,95,A,2025-03-09
+CS23431,Design and Analysis of Algorithms,1,John Doe,john.doe@example.com,58,D,2025-03-09

@@ -54,6 +54,36 @@ The optimized files will be generated in the `dist` folder.
   - `app.jsx` - Main application logic, routing, and UI components.
   - `index.css` - Global stylesheet, including Tailwind CSS directives.
   - `main.jsx` - React application entry point.
+- `ml-api/` - Contains the Python API server and ML model for SWOT Analysis.
+
+## 🤖 Running the ML Model
+
+The IMS includes an ML model for SWOT analysis. To run the ML API server locally:
+
+### 1. Navigate to the ML API directory
+```bash
+cd ml-api
+```
+
+### 2. Install Python dependencies
+```bash
+# For macOS users, XGBoost requires libomp:
+brew install libomp
+
+pip3 install -r requirements.txt
+```
+
+### 3. Start the API server
+```bash
+python3 api_server.py
+```
+
+The API server will run on `http://127.0.0.1:5001`. You can then run the SWOT analysis from the Admin Dashboard in the frontend.
+
+Alternatively, to run the ML model analysis directly in the terminal:
+```bash
+python3 ml.py
+```
 
 ## 🤝 Contributing
 

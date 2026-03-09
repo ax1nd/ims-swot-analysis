@@ -1,14 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, X, Bot, User } from 'lucide-react';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyC2cMYmWrOY7Z1Q9FI7fKfw_5_At_2IU6M';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCRtsNYGzdgxBJCa1AWhEs0m5EV6cGSLDU';
 // Models that are available for your API key (from ListModels)
 const GEMINI_CONFIGS = [
   { version: 'v1beta', model: 'gemini-2.5-flash' },
   { version: 'v1beta', model: 'gemini-2.0-flash' },
-  { version: 'v1beta', model: 'gemini-flash-latest' },
-  { version: 'v1beta', model: 'gemini-2.5-pro' },
-  { version: 'v1beta', model: 'gemini-pro-latest' },
+  { version: 'v1beta', model: 'gemini-1.5-flash' }
 ];
 function getGeminiUrl(version, model) {
   return `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
@@ -76,6 +74,7 @@ export default function KuttiChatbot({ currentTheme, darkMode }) {
     };
 
     let lastError;
+    // Iterate through models. Stop completely if the API key is leaked or permission denied.
     for (const { version, model } of GEMINI_CONFIGS) {
       const url = getGeminiUrl(version, model);
       try {
@@ -84,16 +83,30 @@ export default function KuttiChatbot({ currentTheme, darkMode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
+
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          lastError = new Error(err?.error?.message || `API error: ${res.status}`);
-          continue;
+          const errMsg = err?.error?.message || `API error: ${res.status}`;
+
+          // If the error is an API key issue, stop the loop immediately and throw it!
+          if (res.status === 403 || res.status === 400) {
+            if (errMsg.toLowerCase().includes("key") || errMsg.toLowerCase().includes("permission")) {
+              throw new Error(errMsg);
+            }
+          }
+
+          lastError = new Error(errMsg);
+          continue; // Try next model if it's just a 404 (model not found)
         }
+
         const data = await res.json();
         const candidate = data?.candidates?.[0];
         const text = candidate?.content?.parts?.[0]?.text?.trim();
         if (text) return text;
       } catch (e) {
+        if (e.message.toLowerCase().includes("key") || e.message.toLowerCase().includes("permission")) {
+          throw e; // immediately rethrow fatal API key errors
+        }
         lastError = e;
       }
     }
@@ -113,11 +126,12 @@ export default function KuttiChatbot({ currentTheme, darkMode }) {
       const reply = await sendToGemini(text, messages);
       setMessages((prev) => [...prev, { role: 'model', text: reply }]);
     } catch (err) {
+      console.error("KUTTI Chatbot Error:", err);
       setMessages((prev) => [
         ...prev,
         {
           role: 'model',
-          text: `Something went wrong: ${err.message}. Check your connection or try again later.`,
+          text: "Oops! I'm taking a short break or experiencing network issues. Please try asking me again in a moment! 🤖",
         },
       ]);
     } finally {

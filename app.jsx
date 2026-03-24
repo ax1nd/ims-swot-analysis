@@ -150,34 +150,49 @@ const TimetableContent = ({ currentTheme, darkMode }) => {
 
   const schedule = {
     'MON': {
-      1: { subject: 'Training & placement', staff: 'ARAVINDH S (CS190)' },
-      2: { subject: 'Database Management Systems (CS23411)', staff: 'PANDIARAJAN T. (CS100)' },
-      3: { subject: 'Operating Systems (CS23415)', staff: 'SOWMYA S (CS203)' }
+      1: { subject: 'Placement & Training', staff: '' },
+      2: { subject: 'DBMS', staff: 'CS23411' },
+      3: { subject: 'SDP', staff: 'CS23414' },
+      4: { subject: 'DBMS Lab', staff: 'CS23421' },
+      5: { subject: 'DBMS Lab', staff: 'CS23421' },
+      6: { subject: 'DAA', staff: 'CS23431' },
+      7: { subject: 'TOC', staff: 'CS23413' }
     },
     'TUES': {
-      1: { subject: 'Software Development Practices (CS23414)', staff: 'VINITHA R (CS204)' },
-      2: { subject: 'Machine Learning Techniques (AL23432)', staff: 'ARAVINDH S (CS190)' },
-      3: { subject: 'Theory of Computation (CS23413)', staff: 'ANGALAPARAMESWARI ANBAZHAGAN (CS177)' },
-      4: { subject: 'Database Management Systems (CS23411)', staff: 'PANDIARAJAN T. (CS100)' },
-      5: { subject: 'Software Development Practices (CS23414)', staff: 'PASUPATHI M (CS220)' },
-      6: { subject: 'Software Development Practices (CS23414)', staff: 'SRINIVASAN M.L. (CS133)' }
+      1: { subject: 'SDP', staff: 'CS23414' },
+      2: { subject: 'MLT', staff: 'AL23432' },
+      3: { subject: 'DAA', staff: 'CS23431' },
+      4: { subject: 'MLT LAB', staff: 'AL23432' },
+      5: { subject: 'MLT LAB', staff: 'AL23432' },
+      6: { subject: 'TOC', staff: 'CS23413' },
+      7: { subject: 'OS', staff: 'CS23412' }
     },
     'WEDNES': {
-      1: { subject: 'Theory of Computation (CS23413)', staff: 'ANGALAPARAMESWARI ANBAZHAGAN (CS177)' },
-      2: { subject: 'Operating Systems (CS23415)', staff: 'SOWMYA S (CS203)' },
-      3: { subject: 'Database Management Systems (CS23411)', staff: 'PANDIARAJAN T. (CS100)' },
-      4: { subject: 'Machine Learning Techniques (AL23432)', staff: 'ARAVINDH S (CS190)' }
+      1: { subject: 'TOC', staff: 'CS23413' },
+      2: { subject: 'OS', staff: 'CS23412' },
+      3: { subject: 'DAA', staff: 'CS23431' },
+      4: { subject: 'DBMS', staff: 'CS23411' },
+      5: { subject: 'SDP', staff: 'CS23414' },
+      6: { subject: 'DAA LAB', staff: 'CS23431' },
+      7: { subject: 'DAA LAB', staff: 'CS23431' }
     },
     'THURS': {
-      1: { subject: 'Machine Learning Techniques (AL23432)', staff: 'ARAVINDH S (CS190)' },
-      2: { subject: 'Operating Systems (CS23415)', staff: 'SOWMYA S (CS203)' },
-      3: { subject: 'Theory of Computation (CS23413)', staff: 'ANGALAPARAMESWARI ANBAZHAGAN (CS177)' }
+      1: { subject: 'MLT', staff: 'AL23432' },
+      2: { subject: 'OS', staff: 'CS23412' },
+      3: { subject: 'TOC', staff: 'CS23413' },
+      4: { subject: 'DBMS', staff: 'CS23411' },
+      5: { subject: 'MENTORING', staff: '' },
+      6: { subject: 'OS LAB', staff: 'CS23422' },
+      7: { subject: 'OS LAB', staff: 'CS23422' }
     },
     'FRI': {
-      1: { subject: 'Software Development Practices (CS23414)', staff: 'PASUPATHI M (CS220)' },
-      2: { subject: 'Software Development Practices (CS23414)', staff: 'VINITHA R (CS204)' },
-      3: { subject: 'Machine Learning Techniques (AL23432)', staff: 'ARAVINDH S (CS190)' },
-      4: { subject: 'Software Development Practices (CS23414)', staff: 'SRINIVASAN M.L. (CS133)' }
+      1: { subject: 'OS', staff: 'CS23412' },
+      2: { subject: 'SDP', staff: 'CS23414' },
+      3: { subject: 'DAA', staff: 'CS23431' },
+      4: { subject: 'MLT', staff: 'AL23432' },
+      5: { subject: 'TOC', staff: 'CS23413' },
+      6: { subject: 'MLT', staff: 'AL23432' },
+      7: { subject: 'DBMS', staff: 'CS23411' }
     },
     'SATUR': {}
   };
@@ -221,13 +236,17 @@ const TimetableContent = ({ currentTheme, darkMode }) => {
                       {cell ? (
                         <div className={`w-full h-full p-2.5 rounded-xl bg-blue-50/60 dark:bg-[#111111]/80 !border-[1px] !border-solid !border-black/5 dark:border-white/[0.05] ${currentTheme.textPrimary} flex flex-col items-center justify-center shadow-sm`}>
                           <span className="text-[8px] sm:text-[9px] font-bold uppercase opacity-70 mb-0.5 tracking-wider">Subject</span>
-                          <span className="text-[10px] lg:text-xs font-bold text-blue-600 dark:text-blue-400 mb-2 leading-snug break-words hyphens-auto">
+                          <span className={`text-[10px] lg:text-xs font-bold text-blue-600 dark:text-blue-400 ${cell.staff ? 'mb-2' : 'mb-0'} leading-snug break-words hyphens-auto text-center`}>
                             {cell.subject}
                           </span>
-                          <span className="text-[8px] sm:text-[9px] font-bold uppercase opacity-70 mb-0.5 tracking-wider">Staff</span>
-                          <span className="text-[9px] lg:text-[10px] font-semibold text-slate-700 dark:text-slate-300 leading-tight">
-                            {cell.staff}
-                          </span>
+                          {cell.staff && (
+                            <>
+                              <span className="text-[8px] sm:text-[9px] font-bold uppercase opacity-70 mb-0.5 tracking-wider mt-1">Code</span>
+                              <span className="text-[9px] lg:text-[10px] font-semibold text-slate-700 dark:text-slate-300 leading-tight">
+                                {cell.staff}
+                              </span>
+                            </>
+                          )}
                         </div>
                       ) : (
                         <div className={`w-full h-full rounded-2xl bg-transparent`}></div>

@@ -1010,6 +1010,8 @@ const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
   }, [email]);
 
   const glassCard = `bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06),0_0_0_1px_rgba(255,255,255,0.4)_inset] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-6`;
+  const gradeColor = (g) => g === 'A' ? 'text-emerald-500' : g === 'B' ? 'text-blue-500' : g === 'C' ? 'text-amber-500' : g === 'D' ? 'text-orange-500' : 'text-red-500';
+  const gradeBg = (g) => g === 'A' ? 'bg-emerald-500/20' : g === 'B' ? 'bg-blue-500/20' : g === 'C' ? 'bg-amber-500/20' : g === 'D' ? 'bg-orange-500/20' : 'bg-red-500/20';
 
   if (loading) {
     return (
@@ -1039,57 +1041,72 @@ const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
 
   return (
     <div className="p-4 md:p-10 md:pt-4 max-w-7xl mx-auto w-full animate-fade-in space-y-8">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <span className="w-1 h-8 rounded-full bg-blue-500" />
         <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>My SWOT Analysis</h1>
+        {data.overallGrade && <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${gradeBg(data.overallGrade)} ${gradeColor(data.overallGrade)}`}>{data.overallGrade}</span>}
+        {data.avgMark && <span className={`${currentTheme.textSecondary} text-sm font-medium`}>Avg: {data.avgMark}</span>}
       </div>
       <p className={`${currentTheme.textSecondary} text-sm`}>Performance strengths, weaknesses, and AI-backed recommendations.</p>
 
-      {/* Strengths & Weaknesses - Glass cards */}
+      {/* Strengths & Weaknesses */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className={`${glassCard} relative overflow-hidden`}>
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent" />
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-              <TrendingUp size={22} />
-            </div>
+            <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"><TrendingUp size={22} /></div>
             <h3 className={`${currentTheme.textPrimary} font-bold text-lg`}>Strengths</h3>
           </div>
           <ul className="space-y-2">
             {(data.strengths && data.strengths.length) ? data.strengths.map((s, i) => (
-              <li key={i} className={`flex items-center gap-2 ${currentTheme.textPrimary} text-sm`}>
-                <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
-                <span>{s}</span>
-              </li>
+              <li key={i} className={`flex items-center gap-2 ${currentTheme.textPrimary} text-sm`}><CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" /><span>{s}</span></li>
             )) : <li className={`${currentTheme.textSecondary} text-sm`}>No specific strengths identified yet.</li>}
           </ul>
         </div>
         <div className={`${glassCard} relative overflow-hidden`}>
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
-              <Target size={22} />
-            </div>
+            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400"><Target size={22} /></div>
             <h3 className={`${currentTheme.textPrimary} font-bold text-lg`}>Areas to Improve</h3>
           </div>
           <ul className="space-y-2">
             {(data.weaknesses && data.weaknesses.length) ? data.weaknesses.map((w, i) => (
-              <li key={i} className={`flex items-center gap-2 ${currentTheme.textPrimary} text-sm`}>
-                <AlertTriangle size={16} className="text-amber-500 flex-shrink-0" />
-                <span>{w}</span>
-              </li>
+              <li key={i} className={`flex items-center gap-2 ${currentTheme.textPrimary} text-sm`}><AlertTriangle size={16} className="text-amber-500 flex-shrink-0" /><span>{w}</span></li>
             )) : <li className={`${currentTheme.textSecondary} text-sm`}>No weaknesses identified.</li>}
           </ul>
         </div>
       </div>
 
+      {/* Course-wise performance table */}
+      {data.courses && data.courses.length > 0 && (
+        <div className={`${glassCard}`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>My Course-wise Performance</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className={`border-b ${currentTheme.border}`}>
+                <th className={`p-3 text-left text-xs font-bold uppercase ${currentTheme.textSecondary}`}>Course</th>
+                <th className={`p-3 text-center text-xs font-bold uppercase ${currentTheme.textSecondary}`}>Mark</th>
+                <th className={`p-3 text-center text-xs font-bold uppercase ${currentTheme.textSecondary}`}>Grade</th>
+              </tr></thead>
+              <tbody>
+                {data.courses.map((c, i) => (
+                  <tr key={i} className={`border-b ${currentTheme.border} last:border-0`}>
+                    <td className={`p-3 ${currentTheme.textPrimary} font-medium`}>{c.courseName}</td>
+                    <td className="p-3 text-center"><span className={`font-bold ${c.mark >= 60 ? 'text-emerald-500' : c.mark >= 50 ? 'text-amber-500' : 'text-red-500'}`}>{c.mark}</span></td>
+                    <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded text-xs font-bold ${gradeBg(c.grade)} ${gradeColor(c.grade)}`}>{c.grade}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Recommendations */}
       {(data.recommendations && data.recommendations.length) > 0 && (
         <div className={`${glassCard}`}>
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400">
-              <BookMarked size={22} />
-            </div>
+            <div className="p-2.5 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400"><BookMarked size={22} /></div>
             <h3 className={`${currentTheme.textPrimary} font-bold text-lg`}>Recommended Courses</h3>
           </div>
           <div className="space-y-3">
@@ -1105,34 +1122,20 @@ const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
         </div>
       )}
 
-      {/* Charts - Glassmorphism */}
+      {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-6">
         <div className={`${glassCard}`}>
           <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Grade Distribution</h3>
           {gradePieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie
-                  data={gradePieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={2}
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, value }) => `${name}: ${value}`}
-                >
-                  {gradePieData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="rgba(255,255,255,0.3)" strokeWidth={1} />
-                  ))}
+                <Pie data={gradePieData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={2} dataKey="value" nameKey="name" label={({ name, value }) => `${name}: ${value}`}>
+                  {gradePieData.map((_, i) => (<Cell key={i} fill={COLORS[i % COLORS.length]} stroke="rgba(255,255,255,0.3)" strokeWidth={1} />))}
                 </Pie>
                 <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)' }} />
               </PieChart>
             </ResponsiveContainer>
-          ) : (
-            <p className={`${currentTheme.textSecondary} text-sm py-8 text-center`}>No grade data</p>
-          )}
+          ) : (<p className={`${currentTheme.textSecondary} text-sm py-8 text-center`}>No grade data</p>)}
         </div>
         <div className={`${glassCard}`}>
           <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Average Marks by Course</h3>
@@ -1145,9 +1148,7 @@ const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
                 <Bar dataKey="avgMark" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Avg Mark" />
               </BarChart>
             </ResponsiveContainer>
-          ) : (
-            <p className={`${currentTheme.textSecondary} text-sm py-8 text-center`}>No course data</p>
-          )}
+          ) : (<p className={`${currentTheme.textSecondary} text-sm py-8 text-center`}>No course data</p>)}
         </div>
       </div>
     </div>
@@ -1440,10 +1441,20 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
   const [swotRunning, setSwotRunning] = useState(false);
   const [swotMessage, setSwotMessage] = useState(null);
   const [swotFile, setSwotFile] = useState(null);
+  const [classDashboard, setClassDashboard] = useState(null);
+  const [allStudents, setAllStudents] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentDetail, setStudentDetail] = useState(null);
+  const [studentDetailLoading, setStudentDetailLoading] = useState(false);
   const API_BASE = 'http://127.0.0.1:5001';
+
   const runSwot = async () => {
     setSwotRunning(true);
     setSwotMessage(null);
+    setClassDashboard(null);
+    setAllStudents(null);
+    setSelectedStudent(null);
+    setStudentDetail(null);
     try {
       const formData = new FormData();
       if (swotFile) formData.append('file', swotFile);
@@ -1455,6 +1466,13 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         setSwotMessage({ type: 'success', text: `Analysis complete. Results available for ${data.studentCount || 0} students.` });
+        // Auto-fetch dashboard and student list
+        const [dashRes, studRes] = await Promise.all([
+          fetch(`${API_BASE}/api/swot/class-dashboard`).then(r => r.json()).catch(() => null),
+          fetch(`${API_BASE}/api/swot/all-students`).then(r => r.json()).catch(() => null),
+        ]);
+        if (dashRes && !dashRes.error) setClassDashboard(dashRes);
+        if (studRes && !studRes.error) setAllStudents(studRes);
       } else {
         setSwotMessage({ type: 'error', text: data.error || 'Run failed' });
       }
@@ -1462,6 +1480,18 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
       setSwotMessage({ type: 'error', text: 'Cannot reach API. Start the server: cd ml-api && pip install -r requirements.txt && python api_server.py' });
     }
     setSwotRunning(false);
+  };
+
+  const viewStudentDetail = async (email) => {
+    setSelectedStudent(email);
+    setStudentDetailLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/swot/result?email=${encodeURIComponent(email)}`);
+      const data = await res.json().catch(() => null);
+      if (res.ok && data) setStudentDetail(data);
+      else setStudentDetail(null);
+    } catch { setStudentDetail(null); }
+    setStudentDetailLoading(false);
   };
 
   if (section === 'password') {
@@ -1649,15 +1679,128 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
     );
   }
 
-  // SWOT Analysis (ML model integration)
+  // SWOT Analysis (ML model integration) with Class Dashboard
   if (section === 'swot') {
+    const gradeColor = (g) => g === 'A' ? 'text-emerald-500' : g === 'B' ? 'text-blue-500' : g === 'C' ? 'text-amber-500' : g === 'D' ? 'text-orange-500' : 'text-red-500';
+    const gradeBg = (g) => g === 'A' ? 'bg-emerald-500/20' : g === 'B' ? 'bg-blue-500/20' : g === 'C' ? 'bg-amber-500/20' : g === 'D' ? 'bg-orange-500/20' : 'bg-red-500/20';
+
+    // Student detail modal
+    if (selectedStudent && studentDetail) {
+      const sd = studentDetail;
+      return (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <button onClick={() => { setSelectedStudent(null); setStudentDetail(null); }} className={`p-2 rounded-xl ${currentTheme.card} ${currentTheme.neoBorder} hover:bg-black/5 dark:hover:bg-white/10`}>
+              <ChevronRight size={18} className={`${currentTheme.textPrimary} rotate-180`} />
+            </button>
+            <span className="w-1 h-8 rounded-full bg-blue-500" />
+            <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>{sd.name || selectedStudent}</h1>
+            <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${gradeBg(sd.overallGrade)} ${gradeColor(sd.overallGrade)}`}>{sd.overallGrade || 'N/A'}</span>
+          </div>
+          <p className={`${currentTheme.textSecondary} text-sm`}>Individual SWOT analysis for {sd.email}</p>
+
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'AVG MARK', value: sd.avgMark || '—', color: 'bg-blue-500' },
+              { label: 'COURSES', value: sd.totalCourses || '—', color: 'bg-indigo-500' },
+              { label: 'STRENGTHS', value: (sd.strengths || []).length, color: 'bg-emerald-500' },
+              { label: 'WEAKNESSES', value: (sd.weaknesses || []).length, color: 'bg-amber-500' },
+            ].map((s, i) => (
+              <div key={i} className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-5 border ${currentTheme.neoBorder} relative overflow-hidden`}>
+                <p className={`${currentTheme.textPrimary} text-2xl font-bold`}>{s.value}</p>
+                <p className={`${currentTheme.textSecondary} text-xs font-bold uppercase mt-1`}>{s.label}</p>
+                <div className={`absolute bottom-0 right-0 w-16 h-16 rounded-tl-full ${s.color} opacity-10`} />
+              </div>
+            ))}
+          </div>
+
+          {/* Strengths & Weaknesses */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+              <div className="flex items-center gap-2 mb-4"><TrendingUp size={20} className="text-emerald-500" /><h3 className={`${currentTheme.textPrimary} font-bold`}>Strengths</h3></div>
+              <ul className="space-y-2">
+                {(sd.strengths && sd.strengths.length) ? sd.strengths.map((s, i) => (
+                  <li key={i} className={`flex items-center gap-2 ${currentTheme.textPrimary} text-sm`}><CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />{s}</li>
+                )) : <li className={`${currentTheme.textSecondary} text-sm`}>No specific strengths identified.</li>}
+              </ul>
+            </div>
+            <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+              <div className="flex items-center gap-2 mb-4"><AlertTriangle size={20} className="text-amber-500" /><h3 className={`${currentTheme.textPrimary} font-bold`}>Areas to Improve</h3></div>
+              <ul className="space-y-2">
+                {(sd.weaknesses && sd.weaknesses.length) ? sd.weaknesses.map((w, i) => (
+                  <li key={i} className={`flex items-center gap-2 ${currentTheme.textPrimary} text-sm`}><XCircle size={16} className="text-red-400 flex-shrink-0" />{w}</li>
+                )) : <li className={`${currentTheme.textSecondary} text-sm`}>No weaknesses identified.</li>}
+              </ul>
+            </div>
+          </div>
+
+          {/* Course-level marks table */}
+          {sd.courses && sd.courses.length > 0 && (
+            <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl overflow-hidden border ${currentTheme.neoBorder}`}>
+              <h3 className={`${currentTheme.textPrimary} font-bold p-4 border-b ${currentTheme.border}`}>Course-wise Performance</h3>
+              <table className="w-full text-sm">
+                <thead className={`${currentTheme.bg}`}><tr>
+                  <th className="p-4 text-left font-bold uppercase text-xs">Course ID</th>
+                  <th className="p-4 text-left font-bold uppercase text-xs">Course Name</th>
+                  <th className="p-4 text-center font-bold uppercase text-xs">Mark</th>
+                  <th className="p-4 text-center font-bold uppercase text-xs">Grade</th>
+                </tr></thead>
+                <tbody>
+                  {sd.courses.map((c, i) => (
+                    <tr key={i} className={`border-b ${currentTheme.border} hover:bg-black/5 dark:hover:bg-white/5`}>
+                      <td className="p-4 font-mono font-semibold text-blue-600 dark:text-blue-400">{c.courseId}</td>
+                      <td className={`p-4 ${currentTheme.textPrimary}`}>{c.courseName}</td>
+                      <td className="p-4 text-center"><span className={`font-bold ${c.mark >= 60 ? 'text-emerald-500' : c.mark >= 50 ? 'text-amber-500' : 'text-red-500'}`}>{c.mark}</span></td>
+                      <td className="p-4 text-center"><span className={`px-2 py-0.5 rounded text-xs font-bold ${gradeBg(c.grade)} ${gradeColor(c.grade)}`}>{c.grade}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Recommendations */}
+          {sd.recommendations && sd.recommendations.length > 0 && (
+            <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+              <div className="flex items-center gap-2 mb-4"><BookMarked size={20} className="text-blue-500" /><h3 className={`${currentTheme.textPrimary} font-bold`}>Recommended Courses</h3></div>
+              <div className="space-y-3">
+                {sd.recommendations.map((r, i) => (
+                  <div key={i} className={`flex flex-wrap items-center gap-2 p-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+                    <span className={`${currentTheme.textSecondary} text-sm`}>Low in</span>
+                    <span className={`font-semibold ${currentTheme.textPrimary}`}>{r.weakCourse}</span>
+                    <span className={currentTheme.textSecondary}>→</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-semibold">{r.recommendedCourse}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Loading student detail
+    if (selectedStudent && studentDetailLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-[300px]">
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-8 border ${currentTheme.neoBorder} flex items-center gap-4`}>
+            <Activity size={28} className="animate-pulse text-blue-500" />
+            <span className={currentTheme.textPrimary}>Loading student data...</span>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <span className="w-1 h-8 rounded-full bg-amber-500" />
           <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>SWOT & ML Performance Analysis</h1>
         </div>
-        <p className={`${currentTheme.textSecondary} text-sm`}>Run the ML model on performance data (from student CAT marks). Ensure Course Data is set and data is exported to CSV. Results will appear in the student panel for each student.</p>
+        <p className={`${currentTheme.textSecondary} text-sm`}>Run the ML model on performance data. Click Analyse to auto-run the ML scripts and view class dashboard with individual student drill-down.</p>
+
+        {/* Run Analysis Card */}
         <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
           <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Run Analysis</h3>
           <div className="flex flex-wrap gap-4 items-end">
@@ -1665,18 +1808,150 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
               <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary} block mb-2`}>Upload CSV (optional)</label>
               <input type="file" accept=".csv" onChange={(e) => setSwotFile(e.target.files?.[0] || null)} className={`text-sm ${currentTheme.textPrimary}`} />
             </div>
-            <button onClick={runSwot} disabled={swotRunning} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-60 flex items-center gap-2">
-              <Activity size={18} /> {swotRunning ? 'Running...' : 'Run SWOT & ML Analysis'}
+            <button id="analyse-btn" onClick={runSwot} disabled={swotRunning} className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold disabled:opacity-60 flex items-center gap-2 shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:-translate-y-0.5 transition-all">
+              <Activity size={18} className={swotRunning ? 'animate-spin' : ''} /> {swotRunning ? 'Running ML Scripts...' : 'Analyse'}
             </button>
           </div>
           {swotMessage && (
-            <p className={`mt-4 text-sm ${swotMessage.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>{swotMessage.text}</p>
+            <div className={`mt-4 p-3 rounded-xl text-sm font-medium ${swotMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+              {swotMessage.type === 'success' ? <CheckCircle2 size={16} className="inline mr-2" /> : <XCircle size={16} className="inline mr-2" />}
+              {swotMessage.text}
+            </div>
           )}
-          <p className={`${currentTheme.textSecondary} text-xs mt-4`}>Uses data.csv by default if no file is uploaded. Ensure the API server is running: from project root run <code className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs">cd ml-api &amp;&amp; python api_server.py</code></p>
         </div>
+
+        {/* Class Performance Dashboard - shows after analysis */}
+        {classDashboard && (
+          <>
+            <div className="flex items-center gap-2 mt-4">
+              <span className="w-1 h-8 rounded-full bg-blue-500" />
+              <h2 className={`${currentTheme.textPrimary} text-xl font-bold`}>Class Performance Dashboard</h2>
+            </div>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                { label: 'CLASS AVG', value: classDashboard.classAverage, color: 'bg-blue-500', darkGlow: 'bg-blue-600' },
+                { label: 'HIGHEST', value: classDashboard.highest, color: 'bg-emerald-500', darkGlow: 'bg-emerald-600' },
+                { label: 'LOWEST', value: classDashboard.lowest, color: 'bg-red-500', darkGlow: 'bg-red-600' },
+                { label: 'PASS RATE', value: `${classDashboard.passRate}%`, color: 'bg-indigo-500', darkGlow: 'bg-indigo-600' },
+                { label: 'STUDENTS', value: classDashboard.totalStudents, color: 'bg-amber-500', darkGlow: 'bg-amber-600' },
+              ].map((s, i) => (
+                <div key={i} className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-5 border ${currentTheme.neoBorder} relative overflow-hidden group hover:scale-[1.02] transition-transform`}>
+                  <p className={`${currentTheme.textPrimary} text-2xl font-bold relative z-10`}>{s.value}</p>
+                  <p className={`${currentTheme.textSecondary} text-xs font-bold uppercase mt-1 relative z-10`}>{s.label}</p>
+                  <div className={`absolute bottom-0 right-0 w-20 h-20 rounded-tl-full ${s.color} opacity-10 group-hover:opacity-20 transition-opacity`} />
+                  {darkMode && <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full blur-[40px] opacity-15 ${s.darkGlow} group-hover:opacity-30 transition-opacity`} />}
+                </div>
+              ))}
+            </div>
+
+            {/* Grade Distribution + Avg per Course Charts */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+                <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Grade Distribution</h3>
+                {classDashboard.gradeDistribution && (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie data={Object.entries(classDashboard.gradeDistribution).map(([name, value]) => ({ name, value }))} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" nameKey="name" label={({ name, value }) => `${name}: ${value}`}>
+                        {Object.keys(classDashboard.gradeDistribution).map((_, i) => (
+                          <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="rgba(255,255,255,0.2)" strokeWidth={1} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+              <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+                <h3 className={`${currentTheme.textPrimary} font-bold mb-4`}>Average Marks by Course</h3>
+                {classDashboard.summary?.avgMarksPerCourse && (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={classDashboard.summary.avgMarksPerCourse} margin={{ top: 8, right: 8, left: 0, bottom: 24 }}>
+                      <XAxis dataKey="course" tick={{ fontSize: 9 }} tickFormatter={(v) => v.length > 14 ? v.slice(0, 14) + '…' : v} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                      <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)' }} />
+                      <Bar dataKey="avgMark" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Avg Mark" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* Top Performers & At Risk */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+                <div className="flex items-center gap-2 mb-4"><Award size={20} className="text-emerald-500" /><h3 className={`${currentTheme.textPrimary} font-bold`}>Top Performers</h3></div>
+                <div className="space-y-2">
+                  {(classDashboard.topPerformers || []).length > 0 ? classDashboard.topPerformers.map((s, i) => (
+                    <div key={i} onClick={() => viewStudentDetail(s.email)} className={`flex items-center justify-between p-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 text-xs font-bold">{i + 1}</div>
+                        <span className={`${currentTheme.textPrimary} font-semibold text-sm`}>{s.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-500 font-bold text-sm">{s.avgMark}</span>
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${gradeBg(s.grade)} ${gradeColor(s.grade)}`}>{s.grade}</span>
+                      </div>
+                    </div>
+                  )) : <p className={`${currentTheme.textSecondary} text-sm`}>No top performers found.</p>}
+                </div>
+              </div>
+              <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+                <div className="flex items-center gap-2 mb-4"><AlertTriangle size={20} className="text-red-400" /><h3 className={`${currentTheme.textPrimary} font-bold`}>At Risk Students</h3></div>
+                <div className="space-y-2">
+                  {(classDashboard.atRisk || []).length > 0 ? classDashboard.atRisk.map((s, i) => (
+                    <div key={i} onClick={() => viewStudentDetail(s.email)} className={`flex items-center justify-between p-3 rounded-xl bg-red-500/5 border border-red-500/10 cursor-pointer hover:bg-red-500/10 transition-colors`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 text-xs font-bold">!</div>
+                        <span className={`${currentTheme.textPrimary} font-semibold text-sm`}>{s.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-500 font-bold text-sm">{s.avgMark}</span>
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${gradeBg(s.grade)} ${gradeColor(s.grade)}`}>{s.grade}</span>
+                      </div>
+                    </div>
+                  )) : <p className={`${currentTheme.textSecondary} text-sm`}>No at-risk students. Great!</p>}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Full Student List */}
+        {allStudents && allStudents.students && (
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl overflow-hidden border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold p-4 border-b ${currentTheme.border}`}>All Students — Click to view individual SWOT</h3>
+            <table className="w-full text-sm">
+              <thead className={`${currentTheme.bg}`}><tr>
+                <th className="p-4 text-left font-bold uppercase text-xs">Student</th>
+                <th className="p-4 text-center font-bold uppercase text-xs">Avg Mark</th>
+                <th className="p-4 text-center font-bold uppercase text-xs">Grade</th>
+                <th className="p-4 text-center font-bold uppercase text-xs">Courses</th>
+                <th className="p-4 text-center font-bold uppercase text-xs">Strengths</th>
+                <th className="p-4 text-center font-bold uppercase text-xs">Weaknesses</th>
+                <th className="p-4 text-center font-bold uppercase text-xs">Action</th>
+              </tr></thead>
+              <tbody>
+                {allStudents.students.map((s, i) => (
+                  <tr key={i} className={`border-b ${currentTheme.border} hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors`} onClick={() => viewStudentDetail(s.email)}>
+                    <td className="p-4"><div className={`${currentTheme.textPrimary} font-semibold`}>{s.name}</div><div className={`${currentTheme.textSecondary} text-xs`}>{s.email}</div></td>
+                    <td className="p-4 text-center"><span className={`font-bold ${s.avgMark >= 70 ? 'text-emerald-500' : s.avgMark >= 50 ? 'text-amber-500' : 'text-red-500'}`}>{s.avgMark}</span></td>
+                    <td className="p-4 text-center"><span className={`px-2 py-0.5 rounded text-xs font-bold ${gradeBg(s.grade)} ${gradeColor(s.grade)}`}>{s.grade}</span></td>
+                    <td className={`p-4 text-center ${currentTheme.textPrimary} font-semibold`}>{s.totalCourses}</td>
+                    <td className="p-4 text-center"><span className="text-emerald-500 font-bold">{(s.strengths || []).length}</span></td>
+                    <td className="p-4 text-center"><span className="text-red-400 font-bold">{(s.weaknesses || []).length}</span></td>
+                    <td className="p-4 text-center"><button className="text-blue-500 font-semibold hover:underline text-xs uppercase tracking-wider">View</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   }
+
 
   // Energy Optimization
   if (section === 'energy') {

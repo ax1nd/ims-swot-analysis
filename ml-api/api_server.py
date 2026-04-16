@@ -80,6 +80,25 @@ def get_summary():
         return jsonify({'error': 'No analysis run yet'}), 404
     return jsonify(SWOT_SUMMARY)
 
+@app.route('/api/swot/predict', methods=['POST'])
+def run_predict_mechanics():
+    body = request.get_json(silent=True) or {}
+    email = body.get('email')
+    course_id = body.get('courseId')
+    if not email or not course_id:
+        return jsonify({'error': 'Missing email or courseId'}), 400
+    
+    try:
+        from ml_api import trigger_predict_mechanics # type: ignore
+        result = trigger_predict_mechanics(email, course_id)
+        if result.get('error'):
+            return jsonify(result), 400
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/swot/all-students', methods=['GET'])
 def get_all_students():

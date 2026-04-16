@@ -1,0 +1,57 @@
+[mysqld]
+# ---------------------------------------------------------
+# Blockchain Integration Configuration (my.cnf override)
+# Optimized for high-throughput ledger transactions and 
+# absolute ACID durability for blockchain operations.
+# ---------------------------------------------------------
+
+# Basic Node & Replication Settings
+# Required for potential consensus mechanisms / clustering
+server-id = 1
+log_bin = /var/log/mysql/mysql-bin.log
+binlog_format = ROW
+
+# ---------------------------------------------------------
+# InnoDB Performance & Ledger Optimizations
+# ---------------------------------------------------------
+
+# Maximize buffer pool for rapid indexing of cryptographic hashes
+innodb_buffer_pool_size = 4G
+innodb_buffer_pool_instances = 4
+
+# Increase redo log size for heavy consecutive block/transaction appending
+innodb_log_file_size = 1G
+innodb_log_buffer_size = 64M
+
+# ---------------------------------------------------------
+# ACID Durability & Consistency (CRITICAL FOR BLOCKCHAIN)
+# ---------------------------------------------------------
+
+# Setting to 1 ensures 100% ACID compliance (no data loss on crash)
+innodb_flush_log_at_trx_commit = 1
+sync_binlog = 1
+
+# Strict isolation level to prevent phantom reads during ledger verification
+transaction-isolation = SERIALIZABLE
+
+# Ensure strict SQL mode prevents invalid data inputs into the ledger
+sql_mode = "STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
+
+# ---------------------------------------------------------
+# Network & Concurrency
+# ---------------------------------------------------------
+
+# Accommodate numerous peer-to-peer connection nodes
+max_connections = 1500
+
+# High I/O capacity for rapid disk writes (SSD recommended)
+innodb_io_capacity = 2000
+innodb_io_capacity_max = 5000
+
+# Allow unlimited threads for concurrent transaction processing
+innodb_thread_concurrency = 0
+
+# Support for large payloads (e.g., smart contract bytecodes or large blocks)
+max_allowed_packet = 256M
+interactive_timeout = 28800
+wait_timeout = 28800

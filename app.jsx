@@ -1217,11 +1217,8 @@ const SignInPage = ({ onSignIn }) => {
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent" />
         <div className="relative z-10">
           <div className="flex justify-center mb-8">
-            <div className="w-16 h-16 rounded-[20px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-[0_8px_24px_rgba(59,130,246,0.35)] border border-white/20">
-              <svg viewBox="0 0 100 100" className="w-8 h-8 fill-white drop-shadow-md">
-                <path d="M25 25 L75 25 L75 75 L25 75 Z" stroke="white" strokeWidth="8" fill="none" rx="10" />
-                <text x="50" y="66" textAnchor="middle" fontSize="42" fill="white" fontWeight="800" fontFamily="sans-serif">R</text>
-              </svg>
+            <div className="h-24 w-auto flex items-center justify-center p-2 rounded-2xl bg-white/5 dark:bg-white/10 shadow-sm border border-white/20">
+              <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="h-full object-contain drop-shadow-sm" />
             </div>
           </div>
 
@@ -1446,7 +1443,30 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentDetail, setStudentDetail] = useState(null);
   const [studentDetailLoading, setStudentDetailLoading] = useState(false);
+  const [predictEmail, setPredictEmail] = useState('aarav.sharma@example.com');
+  const [predictCourseId, setPredictCourseId] = useState('CS23414');
+  const [predictResult, setPredictResult] = useState(null);
+  const [isPredicting, setIsPredicting] = useState(false);
+  
   const API_BASE = 'http://127.0.0.1:5001';
+
+  const triggerMechanics = async () => {
+    if (!predictEmail || !predictCourseId) return;
+    setIsPredicting(true);
+    setPredictResult(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/swot/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: predictEmail, courseId: predictCourseId })
+      });
+      const data = await res.json();
+      setPredictResult(data);
+    } catch (e) {
+      setPredictResult({ error: 'Mechanics offline or unreachable' });
+    }
+    setIsPredicting(false);
+  };
   const runSwot = async (forceDemo = false) => {
     setSwotRunning(true);
     setSwotMessage(null);
@@ -1825,6 +1845,41 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
           )}
         </div>
 
+        {/* AI Mechanics Card */}
+        <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder} mt-6`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold mb-4 flex items-center gap-2`}><Zap size={20} className="text-yellow-500" /> Trigger AI Predictive Mechanics</h3>
+          <p className={`${currentTheme.textSecondary} text-sm mb-4`}>Simulate and preview a student's mark in a specific module for their next iteration using the ML model.</p>
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-1 w-full relative">
+              <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary} block mb-2`}>Student Email</label>
+              <input value={predictEmail} onChange={e => setPredictEmail(e.target.value)} type="text" placeholder="e.g. aarav.sharma@example.com" className={`w-full py-2.5 px-4 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary} outline-none focus:ring-2 focus:ring-blue-500/50`} />
+            </div>
+            <div className="w-full sm:w-48 relative">
+              <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary} block mb-2`}>Course ID</label>
+              <input value={predictCourseId} onChange={e => setPredictCourseId(e.target.value)} type="text" placeholder="e.g. AL23432" className={`w-full py-2.5 px-4 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary} outline-none focus:ring-2 focus:ring-blue-500/50`} />
+            </div>
+            <button onClick={triggerMechanics} disabled={isPredicting} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold disabled:opacity-60 flex items-center gap-2 shadow-md transition-all whitespace-nowrap">
+              <Zap size={18} className={isPredicting ? "animate-pulse" : ""} /> {isPredicting ? 'Computing...' : 'Trigger Predict'}
+            </button>
+          </div>
+          {predictResult && (
+            <div className={`mt-4 p-4 rounded-xl border ${predictResult.error ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400'}`}>
+              {predictResult.error ? predictResult.error : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase opacity-80">Predicted Evaluation Result</p>
+                    <p className="text-lg font-black mt-1">Student {predictResult.email} in {predictResult.courseId}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold uppercase opacity-80">Expected Mark</p>
+                    <p className="text-3xl font-black">{predictResult.predictedMark} <span className="text-sm">/ 100</span></p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Class Performance Dashboard - shows after analysis */}
         {classDashboard && (
           <>
@@ -2186,12 +2241,8 @@ const App = () => {
         {/* Logo Section */}
         <div className="h-28 flex items-center px-8 relative">
           <div className="flex items-center gap-4 w-full">
-            <div className={`w-12 h-12 rounded-[16px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-[0_8px_16px_rgba(59,130,246,0.25)] relative overflow-hidden group`}>
-              {darkMode && <div className="absolute inset-0 bg-blue-400/30 blur-md group-hover:opacity-100 opacity-0 transition-opacity"></div>}
-              <svg viewBox="0 0 100 100" className="w-6 h-6 fill-white drop-shadow-md relative z-10">
-                <path d="M25 25 L75 25 L75 75 L25 75 Z" stroke="white" strokeWidth="8" fill="none" rx="10" />
-                <text x="50" y="66" textAnchor="middle" fontSize="42" fill="white" fontWeight="800" fontFamily="sans-serif">R</text>
-              </svg>
+            <div className={`w-12 h-12 rounded-[16px] bg-white dark:bg-slate-800 flex items-center justify-center flex-shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.1)] relative overflow-hidden group border ${currentTheme.neoBorder}`}>
+              <img src="/RIT WHITE LOGO.png" alt="RIT" className="w-auto h-16 object-cover scale-125" />
             </div>
 
             {!isSidebarCollapsed && (

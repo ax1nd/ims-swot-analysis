@@ -136,8 +136,11 @@ def build_model_and_metrics(df):
         print(f'Model build error: {e}')
         return {'error': str(e)}
 
+ACTIVE_ML_CONTEXT = {}
+
 # --- Run full analysis and return everything for API ---
 def run_full_analysis(filepath='data.csv'):
+    global ACTIVE_ML_CONTEXT
     df = load_data_api(filepath)
     if df is None:
         return {'error': 'Dataframe is empty'}
@@ -148,6 +151,11 @@ def run_full_analysis(filepath='data.csv'):
     recommendations = recommend_courses_json(df)
     dashboard = dashboard_data_json(df)
     model_result = build_model_and_metrics(df)
+
+    ACTIVE_ML_CONTEXT['df'] = df.copy()
+    if model_result and 'model' in model_result:
+        ACTIVE_ML_CONTEXT['model'] = model_result['model']
+        ACTIVE_ML_CONTEXT['encoders'] = model_result['encoders']
 
     # Per-student summary for frontend
     by_email: Dict[str, Any] = {}
@@ -192,3 +200,50 @@ def run_full_analysis(filepath='data.csv'):
         'byStudent': by_email,
     }
     return out
+
+def trigger_predict_mechanics(email, course_id):
+    """Mechanically predict the performance of a student using the active model."""
+    if 'model' not in ACTIVE_ML_CONTEXT or 'df' not in ACTIVE_ML_CONTEXT:
+        return {'error': 'Model not trained yet. Run analysis first.'}
+    
+    df = ACTIVE_ML_CONTEXT['df']
+    model = ACTIVE_ML_CONTEXT['model']
+    encoders = ACTIVE_ML_CONTEXT['encoders']
+    
+    try:
+        email_encoded = encoders['email'].transform([email])[0]
+        course_encoded = encoders['course'].transform([course_id])[0]
+        
+        # Calculate dynamic features
+        student_data = df[df['Candidate Email'] == email]
+        course_data = df[df['Course ID'] == course_id]
+        
+        student_avg_mark = student_data['Mark'].mean() if not student_data.empty else 50.0
+        student_attempt_count = student_data['Attempt ID'].max() + 1 if not student_data.empty else 1
+        course_avg_mark = course_data['Mark'].mean() if not course_data.empty else 50.0
+        course_attempt_count = course_data['Attempt ID'].max() + 1 if not course_data.empty else 1
+        
+        import datetime
+        now = datetime.datetime.now()
+        
+        prediction_data = pd.DataFrame([{
+            'Candidate Email Encoded': email_encoded,
+            'Course ID Encoded': course_encoded,
+            'Attempt ID': student_attempt_count,
+            'Student_Avg_Mark': student_avg_mark,
+            'Student_Attempt_Count': student_attempt_count,
+            'Course_Avg_Mark': course_avg_mark,
+            'Course_Attempt_Count': course_attempt_count,
+            'Day_of_Week': now.weekday(),
+            'Month': now.month
+        }])
+        
+        predicted_mark = float(model.predict(prediction_data)[0])
+        return {
+            'success': True,
+            'predictedMark': int(predicted_mark * 10) / 10.0,
+            'email': email,
+            'courseId': course_id
+        }
+    except Exception as e:
+        return {'error': f'Prediction failed: {str(e)}'}

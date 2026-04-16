@@ -1447,8 +1447,7 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
   const [studentDetail, setStudentDetail] = useState(null);
   const [studentDetailLoading, setStudentDetailLoading] = useState(false);
   const API_BASE = 'http://127.0.0.1:5001';
-
-  const runSwot = async () => {
+  const runSwot = async (forceDemo = false) => {
     setSwotRunning(true);
     setSwotMessage(null);
     setClassDashboard(null);
@@ -1456,12 +1455,15 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
     setSelectedStudent(null);
     setStudentDetail(null);
     try {
+      const isEvent = forceDemo && typeof forceDemo === 'object';
+      const actuallyForceDemo = isEvent ? false : forceDemo;
       const formData = new FormData();
-      if (swotFile) formData.append('file', swotFile);
+      const useFile = !actuallyForceDemo && swotFile;
+      if (useFile) formData.append('file', swotFile);
       const res = await fetch(`${API_BASE}/api/swot/run`, {
         method: 'POST',
-        body: swotFile ? formData : JSON.stringify({ useDefault: true }),
-        headers: swotFile ? {} : { 'Content-Type': 'application/json' },
+        body: useFile ? formData : JSON.stringify({ useDefault: true }),
+        headers: useFile ? {} : { 'Content-Type': 'application/json' },
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
@@ -1808,8 +1810,11 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
               <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary} block mb-2`}>Upload CSV (optional)</label>
               <input type="file" accept=".csv" onChange={(e) => setSwotFile(e.target.files?.[0] || null)} className={`text-sm ${currentTheme.textPrimary}`} />
             </div>
-            <button id="analyse-btn" onClick={runSwot} disabled={swotRunning} className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold disabled:opacity-60 flex items-center gap-2 shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:-translate-y-0.5 transition-all">
+            <button id="analyse-btn" onClick={() => runSwot(false)} disabled={swotRunning} className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold disabled:opacity-60 flex items-center gap-2 shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:-translate-y-0.5 transition-all">
               <Activity size={18} className={swotRunning ? 'animate-spin' : ''} /> {swotRunning ? 'Running ML Scripts...' : 'Analyse'}
+            </button>
+            <button onClick={() => { setSwotFile(null); runSwot(true); }} disabled={swotRunning} className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold disabled:opacity-60 flex items-center gap-2 transition-colors">
+              <Activity size={18} /> Use Demo Data
             </button>
           </div>
           {swotMessage && (

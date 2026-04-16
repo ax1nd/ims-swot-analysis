@@ -79,7 +79,10 @@ def recommend_courses_json(df):
         recs = []
         for _, row in student_data.iterrows():
             weak_course = row['Course Name']
-            rec_course = RECOMMENDATION_MAP.get(weak_course, 'General Skills Improvement')
+            if 'Course Suggestion' in row and pd.notna(row['Course Suggestion']):
+                rec_course = row['Course Suggestion']
+            else:
+                rec_course = RECOMMENDATION_MAP.get(weak_course, 'General Skills Improvement')
             recs.append({'weakCourse': str(weak_course), 'recommendedCourse': rec_course})
         result.append({'email': str(email), 'name': str(name), 'recommendations': recs})
     return result

@@ -1,37 +1,37 @@
-Course ID,Course Name,Attempt ID,Candidate Name,Candidate Email,Mark,Grade,Date_of_Attempt
-AL23432,Machine Learning Techniques,1,Aarav Sharma,aarav.sharma@example.com,50,D,2025-03-09
-CS23415,Operating Systems,1,Aarav Sharma,aarav.sharma@example.com,40,F,2025-03-09
-CS23411,Database Management Systems,1,Aarav Sharma,aarav.sharma@example.com,85,A,2025-03-09
-CS23413,Theory of Computation,1,Aarav Sharma,aarav.sharma@example.com,74,B,2025-03-09
-CS23414,Software Development Practices,1,Aarav Sharma,aarav.sharma@example.com,56,D,2025-03-09
-CS23431,Design and Analysis of Algorithms,1,Aarav Sharma,aarav.sharma@example.com,90,A,2025-03-09
-AL23432,Machine Learning Techniques,1,Vivaan Singh,vivaan.singh@example.com,33,F,2025-03-09
-CS23415,Operating Systems,1,Vivaan Singh,vivaan.singh@example.com,54,D,2025-03-09
-CS23411,Database Management Systems,1,Vivaan Singh,vivaan.singh@example.com,61,C,2025-03-09
-CS23413,Theory of Computation,1,Vivaan Singh,vivaan.singh@example.com,30,F,2025-03-09
-CS23414,Software Development Practices,1,Vivaan Singh,vivaan.singh@example.com,77,B,2025-03-09
-CS23431,Design and Analysis of Algorithms,1,Vivaan Singh,vivaan.singh@example.com,42,F,2025-03-09
-AL23432,Machine Learning Techniques,1,Aditya Kumar,aditya.kumar@example.com,95,A,2025-03-09
-CS23415,Operating Systems,1,Aditya Kumar,aditya.kumar@example.com,87,A,2025-03-09
-CS23411,Database Management Systems,1,Aditya Kumar,aditya.kumar@example.com,91,A,2025-03-09
-CS23413,Theory of Computation,1,Aditya Kumar,aditya.kumar@example.com,83,A,2025-03-09
-CS23414,Software Development Practices,1,Aditya Kumar,aditya.kumar@example.com,94,A,2025-03-09
-CS23431,Design and Analysis of Algorithms,1,Aditya Kumar,aditya.kumar@example.com,98,A,2025-03-09
-AL23432,Machine Learning Techniques,1,Saanvi Reddy,saanvi.reddy@example.com,98,A,2025-03-09
-CS23415,Operating Systems,1,Saanvi Reddy,saanvi.reddy@example.com,64,C,2025-03-09
-CS23411,Database Management Systems,1,Saanvi Reddy,saanvi.reddy@example.com,90,A,2025-03-09
-CS23413,Theory of Computation,1,Saanvi Reddy,saanvi.reddy@example.com,72,B,2025-03-09
-CS23414,Software Development Practices,1,Saanvi Reddy,saanvi.reddy@example.com,83,A,2025-03-09
-CS23431,Design and Analysis of Algorithms,1,Saanvi Reddy,saanvi.reddy@example.com,79,B,2025-03-09
-AL23432,Machine Learning Techniques,1,Ishaan Iyer,ishaan.iyer@example.com,83,A,2025-03-09
-CS23415,Operating Systems,1,Ishaan Iyer,ishaan.iyer@example.com,77,B,2025-03-09
-CS23411,Database Management Systems,1,Ishaan Iyer,ishaan.iyer@example.com,69,C,2025-03-09
-CS23413,Theory of Computation,1,Ishaan Iyer,ishaan.iyer@example.com,88,A,2025-03-09
-CS23414,Software Development Practices,1,Ishaan Iyer,ishaan.iyer@example.com,56,D,2025-03-09
-CS23431,Design and Analysis of Algorithms,1,Ishaan Iyer,ishaan.iyer@example.com,95,A,2025-03-09
-AL23432,Machine Learning Techniques,1,Ananya Gupta,ananya.gupta@example.com,73,B,2025-03-09
-CS23415,Operating Systems,1,Ananya Gupta,ananya.gupta@example.com,45,F,2025-03-09
-CS23411,Database Management Systems,1,Ananya Gupta,ananya.gupta@example.com,88,A,2025-03-09
-CS23413,Theory of Computation,1,Ananya Gupta,ananya.gupta@example.com,98,A,2025-03-09
-CS23414,Software Development Practices,1,Ananya Gupta,ananya.gupta@example.com,38,F,2025-03-09
-CS23431,Design and Analysis of Algorithms,1,Ananya Gupta,ananya.gupta@example.com,92,A,2025-03-09
+Course ID,Course Name,Attempt ID,Candidate Name,Candidate Email,Mark,Grade,Date_of_Attempt,Course Suggestion
+AL23432,Machine Learning Techniques,1,Aarav Sharma,aarav.sharma@example.com,50,D,2025-03-09,Applied Deep Learning
+CS23415,Operating Systems,1,Aarav Sharma,aarav.sharma@example.com,40,F,2025-03-09,Kernel Compilation Basics
+CS23411,Database Management Systems,1,Aarav Sharma,aarav.sharma@example.com,85,A,2025-03-09,Advanced SQL and DB Admin
+CS23413,Theory of Computation,1,Aarav Sharma,aarav.sharma@example.com,74,B,2025-03-09,Automata & Formal Languages
+CS23414,Software Development Practices,1,Aarav Sharma,aarav.sharma@example.com,56,D,2025-03-09,Agile & Scrum Bootcamps
+CS23431,Design and Analysis of Algorithms,1,Aarav Sharma,aarav.sharma@example.com,90,A,2025-03-09,Advanced Algorithms
+AL23432,Machine Learning Techniques,1,Vivaan Singh,vivaan.singh@example.com,33,F,2025-03-09,Applied Deep Learning
+CS23415,Operating Systems,1,Vivaan Singh,vivaan.singh@example.com,54,D,2025-03-09,Kernel Compilation Basics
+CS23411,Database Management Systems,1,Vivaan Singh,vivaan.singh@example.com,61,C,2025-03-09,Advanced SQL and DB Admin
+CS23413,Theory of Computation,1,Vivaan Singh,vivaan.singh@example.com,30,F,2025-03-09,Automata & Formal Languages
+CS23414,Software Development Practices,1,Vivaan Singh,vivaan.singh@example.com,77,B,2025-03-09,Agile & Scrum Bootcamps
+CS23431,Design and Analysis of Algorithms,1,Vivaan Singh,vivaan.singh@example.com,42,F,2025-03-09,Advanced Algorithms
+AL23432,Machine Learning Techniques,1,Aditya Kumar,aditya.kumar@example.com,95,A,2025-03-09,Applied Deep Learning
+CS23415,Operating Systems,1,Aditya Kumar,aditya.kumar@example.com,87,A,2025-03-09,Kernel Compilation Basics
+CS23411,Database Management Systems,1,Aditya Kumar,aditya.kumar@example.com,91,A,2025-03-09,Advanced SQL and DB Admin
+CS23413,Theory of Computation,1,Aditya Kumar,aditya.kumar@example.com,83,A,2025-03-09,Automata & Formal Languages
+CS23414,Software Development Practices,1,Aditya Kumar,aditya.kumar@example.com,94,A,2025-03-09,Agile & Scrum Bootcamps
+CS23431,Design and Analysis of Algorithms,1,Aditya Kumar,aditya.kumar@example.com,98,A,2025-03-09,Advanced Algorithms
+AL23432,Machine Learning Techniques,1,Saanvi Reddy,saanvi.reddy@example.com,98,A,2025-03-09,Applied Deep Learning
+CS23415,Operating Systems,1,Saanvi Reddy,saanvi.reddy@example.com,64,C,2025-03-09,Kernel Compilation Basics
+CS23411,Database Management Systems,1,Saanvi Reddy,saanvi.reddy@example.com,90,A,2025-03-09,Advanced SQL and DB Admin
+CS23413,Theory of Computation,1,Saanvi Reddy,saanvi.reddy@example.com,72,B,2025-03-09,Automata & Formal Languages
+CS23414,Software Development Practices,1,Saanvi Reddy,saanvi.reddy@example.com,83,A,2025-03-09,Agile & Scrum Bootcamps
+CS23431,Design and Analysis of Algorithms,1,Saanvi Reddy,saanvi.reddy@example.com,79,B,2025-03-09,Advanced Algorithms
+AL23432,Machine Learning Techniques,1,Ishaan Iyer,ishaan.iyer@example.com,83,A,2025-03-09,Applied Deep Learning
+CS23415,Operating Systems,1,Ishaan Iyer,ishaan.iyer@example.com,77,B,2025-03-09,Kernel Compilation Basics
+CS23411,Database Management Systems,1,Ishaan Iyer,ishaan.iyer@example.com,69,C,2025-03-09,Advanced SQL and DB Admin
+CS23413,Theory of Computation,1,Ishaan Iyer,ishaan.iyer@example.com,88,A,2025-03-09,Automata & Formal Languages
+CS23414,Software Development Practices,1,Ishaan Iyer,ishaan.iyer@example.com,56,D,2025-03-09,Agile & Scrum Bootcamps
+CS23431,Design and Analysis of Algorithms,1,Ishaan Iyer,ishaan.iyer@example.com,95,A,2025-03-09,Advanced Algorithms
+AL23432,Machine Learning Techniques,1,Ananya Gupta,ananya.gupta@example.com,73,B,2025-03-09,Applied Deep Learning
+CS23415,Operating Systems,1,Ananya Gupta,ananya.gupta@example.com,45,F,2025-03-09,Kernel Compilation Basics
+CS23411,Database Management Systems,1,Ananya Gupta,ananya.gupta@example.com,88,A,2025-03-09,Advanced SQL and DB Admin
+CS23413,Theory of Computation,1,Ananya Gupta,ananya.gupta@example.com,98,A,2025-03-09,Automata & Formal Languages
+CS23414,Software Development Practices,1,Ananya Gupta,ananya.gupta@example.com,38,F,2025-03-09,Agile & Scrum Bootcamps
+CS23431,Design and Analysis of Algorithms,1,Ananya Gupta,ananya.gupta@example.com,92,A,2025-03-09,Advanced Algorithms

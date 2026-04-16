@@ -2227,16 +2227,10 @@ const App = () => {
         <div className={`absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-indigo-900/20 blur-[120px] transition-opacity duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${darkMode ? 'opacity-100' : 'opacity-0'}`} />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {!isSidebarCollapsed && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
-          onClick={() => setIsSidebarCollapsed(true)}
-        ></div>
-      )}
+      {/* Mobile Sidebar Overlay (Disabled for new Bottom Nav) */}
 
-      {/* Sidebar - Glassmorphism */}
-      <aside className={`${currentTheme.sidebar} ${isSidebarCollapsed ? 'w-0 overflow-hidden md:w-[100px]' : 'w-[280px]'} transition-[width] duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] flex flex-col fixed h-full z-50`}>
+      {/* Desktop Sidebar - Glassmorphism */}
+      <aside className={`${currentTheme.sidebar} hidden md:flex ${isSidebarCollapsed ? 'w-0 overflow-hidden md:w-[100px]' : 'w-[280px]'} transition-[width] duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] flex-col fixed h-full z-50`}>
 
         {/* Logo Section */}
         <div className="h-28 flex items-center px-8 relative">
@@ -2283,17 +2277,21 @@ const App = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className={`flex-1 flex flex-col transition-all duration-500 ${isSidebarCollapsed ? 'ml-0 md:ml-[100px]' : 'ml-0 md:ml-[280px]'} relative z-10 w-full overflow-x-hidden`}>
+      <main className={`flex-1 flex flex-col transition-all duration-500 ml-0 ${isSidebarCollapsed ? 'md:ml-[100px]' : 'md:ml-[280px]'} relative z-10 w-full overflow-x-hidden pb-24 md:pb-0`}>
 
         {/* Floating Glass Header */}
-        <header className={`sticky top-0 z-40 ${scrolled ? currentTheme.headerBg : 'bg-transparent'} px-4 md:px-6 lg:px-10 h-16 sm:h-20 lg:h-24 flex items-center justify-between gap-2`}>
-          <div className="flex items-center gap-6">
+        <header className={`sticky top-0 z-40 ${scrolled ? currentTheme.headerBg : 'bg-transparent'} px-4 md:px-6 lg:px-10 h-16 sm:h-20 lg:h-24 flex items-center justify-between gap-2 backdrop-blur-3xl md:backdrop-blur-none`}>
+          <div className="flex items-center gap-4 md:gap-6">
+            {/* Desktop Menu toggle */}
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className={`p-2.5 rounded-full ${currentTheme.card} ${currentTheme.neoBorder} hover:scale-105 transition-all shadow-sm group`}
+              className={`hidden md:block p-2.5 rounded-full ${currentTheme.card} ${currentTheme.neoBorder} hover:scale-105 transition-all shadow-sm group`}
             >
               <Menu size={18} className={`${currentTheme.textPrimary}`} />
             </button>
+            <div className="md:hidden w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center -ml-1 border shadow-sm border-slate-200/50 dark:border-white/10 overflow-hidden">
+              <img src="/RIT WHITE LOGO.png" alt="RIT" className="w-auto h-12 object-cover scale-150" />
+            </div>
 
             <h2 className={`text-xl font-bold tracking-tight ${currentTheme.textPrimary} hidden md:block opacity-0 translate-y-2 animate-[fade-in-up_0.4s_ease-out_forwards]`}>
               {activeTab}
@@ -2580,6 +2578,31 @@ const App = () => {
           <SwotAnalysisContent currentTheme={currentTheme} darkMode={darkMode} studentEmail={studentEmail} />
         )}
       </main>
+
+      {/* Native Mobile Bottom Navigation Bar */}
+      <nav className={`md:hidden fixed bottom-6 left-4 right-4 z-50 ${currentTheme.card} ${currentTheme.neoBorder} rounded-[28px] p-2 flex items-center justify-between shadow-[0_10px_40px_rgba(0,0,0,0.15)] overflow-x-auto no-scrollbar gap-2 backdrop-blur-xl`}>
+        {menuItems.map((item) => {
+          const isActive = activeTab === item.label;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.label}
+              onClick={() => setActiveTab(item.label)}
+              className={`flex flex-col items-center justify-center min-w-[70px] py-2.5 px-1 rounded-2xl transition-all duration-300 ${isActive ? 'bg-blue-50 dark:bg-blue-500/20 shadow-inner' : 'hover:bg-slate-50 dark:hover:bg-white/5'}`}
+            >
+              <Icon size={22} className={`mb-1 transition-colors ${isActive ? 'text-blue-600 dark:text-blue-400 shadow-blue-500/50' : 'text-slate-400 opacity-60'}`} />
+              <span className={`text-[9px] font-bold tracking-wide transition-colors ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 opacity-60'} truncate w-full text-center`}>
+                {item.label}
+              </span>
+            </button>
+          )
+        })}
+        {/* Mobile logout capability inside scrollbar */}
+        <button onClick={() => setIsAuthenticated(false)} className="flex flex-col items-center justify-center min-w-[70px] py-2.5 px-1 rounded-2xl transition-all duration-300 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-400">
+          <LogOut size={22} className="mb-1" />
+          <span className="text-[9px] font-bold tracking-wide truncate w-full text-center">Logout</span>
+        </button>
+      </nav>
 
       {/* KUTTI – Student portal assistant chatbot */}
       <KuttiChatbot currentTheme={currentTheme} darkMode={darkMode} />

@@ -1,0 +1,55 @@
+version: '3.8'
+
+networks:
+  ims-network:
+    driver: bridge
+    name: ims-network
+
+volumes:
+  mysql_data:
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: ims-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ims_db
+      MYSQL_USER: ims_user
+      MYSQL_PASSWORD: ims_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Inject custom MySQL configuration if needed
+      - ./sql/blockchain.cnf:/etc/mysql/conf.d/blockchain.cnf:ro
+      # Seed database schema/data on initialization
+      - ./sql/swot_cat_marks_schema_and_data.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - ims-network
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./ml-api
+      dockerfile: Dockerfile
+    container_name: ims-backend
+    ports:
+      - "5001:5001"
+    environment:
+      # Resolving DB container by service name 'db'
+      - DB_HOST=db
+      - DB_USER=ims_user
+      - DB_PASSWORD=ims_password
+      - DB_NAME=ims_db
+      - DB_PORT=3306
+    depends_on:
+      db:
+        # Ensures that the database starts and is fully functional before backend starts
+        condition: service_healthy
+    networks:
+      - ims-network

@@ -15,8 +15,51 @@ except Exception:
     load_data = None
     build_and_evaluate_model = None
 
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
+
 # --- Data loading ---
 def load_data_api(filepath):
+    # Try database first
+    db_host = os.environ.get('DB_HOST')
+    if db_host:
+        db_user = os.environ.get('DB_USER', 'root')
+        db_password = os.environ.get('DB_PASSWORD', '')
+        db_name = os.environ.get('DB_NAME', 'ims_db')
+        db_port = os.environ.get('DB_PORT', '3306')
+        connection_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+        try:
+            engine = create_engine(connection_url)
+            query = \"\"\"
+            SELECT
+              c.course_code   AS 'Course ID',
+              c.course_name   AS 'Course Name',
+              1               AS 'Attempt ID',
+              s.name          AS 'Candidate Name',
+              s.email         AS 'Candidate Email',
+              CAST(ROUND((m.cat1_total + m.cat2_total + m.cat3_total) * 100.0 / 125, 0) AS SIGNED) AS 'Mark',
+              CASE
+                WHEN (m.cat1_total + m.cat2_total + m.cat3_total) * 100.0 / 125 >= 80 THEN 'A'
+                WHEN (m.cat1_total + m.cat2_total + m.cat3_total) * 100.0 / 125 >= 70 THEN 'B'
+                WHEN (m.cat1_total + m.cat2_total + m.cat3_total) * 100.0 / 125 >= 60 THEN 'C'
+                WHEN (m.cat1_total + m.cat2_total + m.cat3_total) * 100.0 / 125 >= 50 THEN 'D'
+                ELSE 'F'
+              END AS 'Grade',
+              CURDATE()       AS 'Date_of_Attempt'
+            FROM cat_marks m
+            JOIN students s ON s.id = m.student_id
+            JOIN courses c  ON c.id = m.course_id
+            WHERE m.cat1_total IS NOT NULL AND m.cat2_total IS NOT NULL AND m.cat3_total IS NOT NULL
+            ORDER BY s.email, c.course_code;
+            \"\"\"
+            df = pd.read_sql(query, engine)
+            if not df.empty:
+                print("Successfully loaded data from MySQL database.")
+                return df
+        except SQLAlchemyError as e:
+            print(f"Database connection or query failed: {e}")
+            print("Falling back to local file if available.")
+
     if load_data:
         return load_data(filepath)
     if not filepath or not os.path.exists(filepath):

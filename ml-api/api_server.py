@@ -37,8 +37,9 @@ def run_swot():
         if body.get('useDefault'):
             filepath = DEFAULT_CSV
 
-    if not os.path.exists(filepath):
-        return jsonify({'error': 'No data file found', 'filepath': filepath}), 400
+    # Allow proceeding without a file if DB_HOST is configured
+    if not os.path.exists(filepath) and not os.environ.get('DB_HOST'):
+        return jsonify({'error': 'No data file found and no DB connected', 'filepath': filepath}), 400
 
     try:
         from ml_api import run_full_analysis # type: ignore

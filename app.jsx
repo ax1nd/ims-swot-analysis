@@ -15,6 +15,7 @@ import {
   X,
   Sun,
   Moon,
+  Monitor,
   ChevronRight,
   LogOut,
   User,
@@ -98,6 +99,120 @@ const themes = {
     headerBg: 'bg-[#000000]/70 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]',
     neoBorder: 'border border-white/[0.08]',
   }
+};
+
+const THEME_STORAGE_KEY = 'theme-mode';
+const THEME_TRANSITION_STYLE_ID = 'theme-transition-styles';
+
+const createThemeAnimation = ({ variant = 'circle', start = 'top-right', blur = false } = {}) => {
+  if (variant === 'rectangle') {
+    return `
+      ::view-transition-group(root) {
+        animation-duration: 0.7s;
+        animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+      }
+      ::view-transition-new(root) {
+        animation-name: reveal-light;
+        ${blur ? 'filter: blur(2px);' : ''}
+      }
+      .dark::view-transition-new(root) {
+        animation-name: reveal-dark;
+        ${blur ? 'filter: blur(2px);' : ''}
+      }
+      ::view-transition-old(root),
+      .dark::view-transition-old(root) {
+        animation: none;
+        z-index: -1;
+      }
+      @keyframes reveal-dark {
+        from { clip-path: polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%); ${blur ? 'filter: blur(8px);' : ''} }
+        to { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); ${blur ? 'filter: blur(0);' : ''} }
+      }
+      @keyframes reveal-light {
+        from { clip-path: polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%); ${blur ? 'filter: blur(8px);' : ''} }
+        to { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); ${blur ? 'filter: blur(0);' : ''} }
+      }
+    `;
+  }
+
+  const positions = {
+    'top-left': '0% 0%',
+    'top-right': '100% 0%',
+    'bottom-left': '0% 100%',
+    'bottom-right': '100% 100%',
+    'center': '50% 50%',
+  };
+  const clipPosition = positions[start] || '50% 50%';
+
+  return `
+    ::view-transition-group(root) {
+      animation-duration: 0.8s;
+      animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+    }
+    ::view-transition-new(root) {
+      animation-name: reveal-light;
+      ${blur ? 'filter: blur(2px);' : ''}
+    }
+    .dark::view-transition-new(root) {
+      animation-name: reveal-dark;
+      ${blur ? 'filter: blur(2px);' : ''}
+    }
+    ::view-transition-old(root),
+    .dark::view-transition-old(root) {
+      animation: none;
+      z-index: -1;
+    }
+    @keyframes reveal-dark {
+      from { clip-path: circle(0% at ${clipPosition}); ${blur ? 'filter: blur(8px);' : ''} }
+      to { clip-path: circle(150% at ${clipPosition}); ${blur ? 'filter: blur(0);' : ''} }
+    }
+    @keyframes reveal-light {
+      from { clip-path: circle(0% at ${clipPosition}); ${blur ? 'filter: blur(8px);' : ''} }
+      to { clip-path: circle(150% at ${clipPosition}); ${blur ? 'filter: blur(0);' : ''} }
+    }
+  `;
+};
+
+const setThemeTransitionStyles = (css) => {
+  if (typeof window === 'undefined') return;
+  let styleElement = document.getElementById(THEME_TRANSITION_STYLE_ID);
+  if (!styleElement) {
+    styleElement = document.createElement('style');
+    styleElement.id = THEME_TRANSITION_STYLE_ID;
+    document.head.appendChild(styleElement);
+  }
+  styleElement.textContent = css;
+};
+
+const ThemeModeToggle = ({ themeMode, onThemeModeChange, currentTheme }) => {
+  const options = [
+    { mode: 'light', label: 'Light', icon: Sun },
+    { mode: 'dark', label: 'Dark', icon: Moon },
+    { mode: 'system', label: 'System', icon: Monitor },
+  ];
+
+  return (
+    <div className={`flex items-center gap-1 rounded-full p-1 ${currentTheme.card} ${currentTheme.neoBorder} shadow-sm`}>
+      {options.map(({ mode, label, icon: Icon }) => {
+        const active = themeMode === mode;
+        return (
+          <button
+            key={mode}
+            onClick={() => onThemeModeChange(mode)}
+            aria-label={`Use ${label.toLowerCase()} theme`}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all ${
+              active
+                ? 'bg-blue-500 text-white shadow-[0_0_12px_rgba(59,130,246,0.35)]'
+                : `${currentTheme.textSecondary} hover:bg-black/5 dark:hover:bg-white/10`
+            }`}
+          >
+            <Icon size={14} />
+            <span className="hidden sm:inline">{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 };
 
 const SidebarItem = ({ icon: Icon, label, active, theme, isCollapsed }) => (
@@ -198,51 +313,55 @@ const TimetableContent = ({ currentTheme, darkMode }) => {
   };
 
   return (
-    <div className="p-4 md:p-10 md:pt-4 max-w-[1600px] mx-auto w-full animate-fade-in">
-      <div className={`${currentTheme.card} rounded-[24px] md:rounded-[32px] p-2 sm:p-5 md:p-8 relative overflow-hidden`}>
+    <div className="p-3 md:p-8 md:pt-4 max-w-[1600px] mx-auto w-full animate-fade-in">
+      <div className={`${currentTheme.card} rounded-[24px] md:rounded-[32px] p-2 sm:p-4 md:p-6 relative overflow-hidden`}>
         <div className={`absolute inset-0 ${currentTheme.cardInner} opacity-50`}></div>
 
         <div className="relative z-10 w-full overflow-x-auto no-scrollbar">
-          <div className="flex items-center justify-between mb-6 md:mb-8 px-2 md:px-0">
-            <h3 className={`${currentTheme.textPrimary} font-bold text-xl md:text-2xl tracking-tight`}>
+          <div className="flex items-center justify-between mb-4 md:mb-6 px-1 md:px-0">
+            <h3 className={`${currentTheme.textPrimary} font-bold text-lg md:text-xl tracking-tight`}>
               Weekly Timetable
             </h3>
             <div className="flex gap-2">
-              <button className={`px-4 py-2 rounded-xl backdrop-blur-md bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} ${currentTheme.textPrimary} text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/10 transition-colors`}>
+              <button className={`px-3 py-1.5 rounded-xl backdrop-blur-md bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} ${currentTheme.textPrimary} text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10 transition-colors`}>
                 Export PDF
               </button>
             </div>
           </div>
 
-          <div className={`min-w-[1200px] grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-px bg-slate-200 dark:bg-white/[0.05] rounded-[24px] overflow-hidden ${currentTheme.neoBorder} p-px shadow-inner`}>
-            <div className={`p-4 text-center font-extrabold text-xs uppercase tracking-widest ${currentTheme.bg} ${currentTheme.textSecondary} flex items-center justify-center`}>
+          <div className={`min-w-[1040px] grid grid-cols-[84px_repeat(7,minmax(124px,1fr))] gap-px bg-slate-200/80 dark:bg-white/[0.06] rounded-[24px] overflow-hidden ${currentTheme.neoBorder} p-px shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]`}>
+            <div className={`p-3 text-center font-extrabold text-[10px] uppercase tracking-wider ${currentTheme.bg} ${currentTheme.textSecondary} flex items-center justify-center`}>
               DAY
             </div>
             {periods.map(period => (
-              <div key={period} className={`p-4 text-center font-extrabold text-xs uppercase tracking-widest ${currentTheme.bg} ${currentTheme.textSecondary}`}>
+              <div key={period} className={`p-3 text-center font-extrabold text-[10px] uppercase tracking-wider ${currentTheme.bg} ${currentTheme.textSecondary}`}>
                 PERIOD {period}
               </div>
             ))}
 
             {days.map(day => (
               <React.Fragment key={day}>
-                <div className={`p-2 font-bold text-xs lg:text-sm text-center ${currentTheme.bg} ${currentTheme.textPrimary} flex items-center justify-center border-t border-slate-200/50 dark:border-white/[0.05]`}>
+                <div className={`p-2 font-bold text-[10px] lg:text-xs text-center ${currentTheme.bg} ${currentTheme.textPrimary} flex items-center justify-center border-t border-slate-200/50 dark:border-white/[0.05]`}>
                   {day}
                 </div>
                 {periods.map(period => {
                   const cell = schedule[day]?.[period];
                   return (
-                    <div key={`${day}-${period}`} className={`p-2 md:p-3 min-h-[160px] flex flex-col gap-2 justify-start items-center text-center bg-white/60 dark:bg-[#000000]/40 backdrop-blur-3xl transition-all hover:bg-white/80 dark:hover:bg-white/[0.08] relative group overflow-hidden border-t border-slate-200/50 dark:border-white/[0.05]`}>
+                    <div key={`${day}-${period}`} className={`p-2 min-h-[92px] md:min-h-[98px] flex flex-col justify-center items-center text-center bg-white/60 dark:bg-[#020617]/55 backdrop-blur-3xl transition-colors hover:bg-white/80 dark:hover:bg-[#0b1220]/80 relative group overflow-hidden border-t border-slate-200/50 dark:border-white/[0.05]`}>
                       {cell ? (
-                        <div className={`w-full h-full p-2.5 rounded-xl bg-blue-50/60 dark:bg-[#111111]/80 !border-[1px] !border-solid !border-black/5 dark:border-white/[0.05] ${currentTheme.textPrimary} flex flex-col items-center justify-center shadow-sm`}>
-                          <span className="text-[8px] sm:text-[9px] font-bold uppercase opacity-70 mb-0.5 tracking-wider">Subject</span>
-                          <span className={`text-[10px] lg:text-xs font-bold text-blue-600 dark:text-blue-400 ${cell.staff ? 'mb-2' : 'mb-0'} leading-snug break-words hyphens-auto text-center`}>
+                        <div className={`w-full h-full p-2 rounded-xl bg-white/85 dark:bg-gradient-to-b dark:from-slate-900/95 dark:to-slate-950/85 !border border-black/10 dark:!border-blue-400/20 flex flex-col items-center justify-center shadow-sm dark:shadow-[0_0_0_1px_rgba(59,130,246,0.08)]`}>
+                          <span className="text-[8px] sm:text-[9px] font-bold uppercase mb-0.5 tracking-wider text-slate-600 dark:text-slate-300">
+                            Subject
+                          </span>
+                          <span className={`text-[10px] md:text-[11px] font-extrabold ${darkMode ? 'text-blue-100' : 'text-slate-900'} ${cell.staff ? 'mb-1.5' : 'mb-0'} leading-snug break-words hyphens-auto text-center`}>
                             {cell.subject}
                           </span>
                           {cell.staff && (
                             <>
-                              <span className="text-[8px] sm:text-[9px] font-bold uppercase opacity-70 mb-0.5 tracking-wider mt-1">Code</span>
-                              <span className="text-[9px] lg:text-[10px] font-semibold text-slate-700 dark:text-slate-300 leading-tight">
+                              <span className="text-[8px] sm:text-[9px] font-bold uppercase mb-0.5 tracking-wider mt-0.5 text-slate-600 dark:text-slate-300">
+                                Code
+                              </span>
+                              <span className={`text-[9px] md:text-[10px] font-bold leading-tight ${darkMode ? 'text-slate-100' : 'text-slate-800'}`}>
                                 {cell.staff}
                               </span>
                             </>
@@ -1163,6 +1282,7 @@ const SignInPage = ({ onSignIn }) => {
   const [error, setError] = useState('');
   const [adminLoginMode, setAdminLoginMode] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [quickLoginMode, setQuickLoginMode] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -1196,6 +1316,21 @@ const SignInPage = ({ onSignIn }) => {
     } finally {
       setGoogleLoading(false);
     }
+  };
+
+  const handleQuickLogin = (mode) => {
+    setError('');
+    setQuickLoginMode(mode);
+
+    // Short preloader gives immediate feedback for faster dev flow.
+    window.setTimeout(() => {
+      if (mode === 'admin') {
+        onSignIn({ isAdmin: true });
+      } else {
+        onSignIn({ isAdmin: false, email: STUDENT_EMAIL_BY_ROLL['2117240020033'] || null });
+      }
+      setQuickLoginMode(null);
+    }, 350);
   };
 
   return (
@@ -1236,7 +1371,7 @@ const SignInPage = ({ onSignIn }) => {
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
-                  disabled={googleLoading}
+                  disabled={googleLoading || quickLoginMode !== null}
                   className="w-full py-3.5 rounded-2xl bg-white dark:bg-white/10 border-2 border-slate-200 dark:border-white/20 hover:border-slate-300 dark:hover:border-white/30 text-slate-700 dark:text-slate-200 text-sm font-semibold flex items-center justify-center gap-3 transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -1258,12 +1393,35 @@ const SignInPage = ({ onSignIn }) => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('student')}
+                disabled={quickLoginMode !== null}
+                className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-[0_8px_22px_rgba(5,150,105,0.3)] transition-all"
+              >
+                {quickLoginMode === 'student' ? 'Loading Student…' : 'Student Login'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('admin')}
+                disabled={quickLoginMode !== null}
+                className="w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-[0_8px_22px_rgba(124,58,237,0.3)] transition-all"
+              >
+                {quickLoginMode === 'admin' ? 'Loading Admin…' : 'Admin Login'}
+              </button>
+            </div>
+            <p className="text-[11px] text-center text-slate-500 dark:text-slate-400 -mt-2">
+              Quick preloader login buttons for faster developer testing.
+            </p>
+
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pl-1">User ID</label>
               <input
                 type="text"
                 value={userId}
                 onChange={(e) => { setUserId(e.target.value); setError(''); }}
+                disabled={quickLoginMode !== null}
                 placeholder="Enter your User ID"
                 className="w-full bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-white/50 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400/50 transition-all shadow-sm"
               />
@@ -1275,6 +1433,7 @@ const SignInPage = ({ onSignIn }) => {
                 type="password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                disabled={quickLoginMode !== null}
                 placeholder="Enter your password"
                 className="w-full bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-white/50 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400/50 transition-all shadow-sm"
               />
@@ -1284,6 +1443,7 @@ const SignInPage = ({ onSignIn }) => {
 
             <button
               type="submit"
+              disabled={quickLoginMode !== null}
               className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold tracking-wide shadow-[0_8px_24px_rgba(37,99,235,0.35)] hover:shadow-[0_8px_28px_rgba(37,99,235,0.45)] hover:-translate-y-0.5 transition-all outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4 border border-white/20"
             >
               Sign In
@@ -1293,6 +1453,7 @@ const SignInPage = ({ onSignIn }) => {
               <button
                 type="button"
                 onClick={() => { setAdminLoginMode(!adminLoginMode); setError(''); }}
+                disabled={quickLoginMode !== null}
                 className="w-full py-3 rounded-2xl bg-white/50 dark:bg-white/[0.06] hover:bg-white/70 dark:hover:bg-white/10 border border-white/50 dark:border-white/10 text-slate-600 dark:text-slate-300 text-sm font-semibold flex items-center justify-center gap-2 transition-all"
               >
                 <ShieldCheck size={18} />
@@ -1324,7 +1485,49 @@ const ADMIN_NAV = [
   { id: 'password', label: 'Change Password', icon: KeyRound },
 ];
 
-const AdminPanel = ({ onLogout, darkMode, onToggleTheme }) => {
+const IMS_SECURITY_V2 = {
+  blockchain_layer: {
+    technology: 'Hyperledger Fabric / Private Ethereum',
+    consensus: 'Proof of Authority (PoA)',
+    core_function: 'Immutable Audit Logging',
+    data_to_chain: [
+      'User_Access_Logs',
+      'Record_Modifications',
+      'Data_Exfiltration_Attempts',
+    ],
+  },
+  prevention_system: {
+    mechanism: 'Honeypot & Smart Contract Validation',
+    features: {
+      integrity_check: 'Every data request compares DB Hash vs. Blockchain Hash',
+      access_control: 'Multi-signature approval for bulk data exports',
+      honey_tokens: 'Decoy data records that trigger alarms if accessed',
+    },
+  },
+  attacking_system_simulator: {
+    purpose: 'Security Validation & Stress Testing',
+    attack_vectors: [
+      'SQL_Injection_Simulation',
+      'Brute_Force_Attempt',
+      'Unauthorized_API_Fetch',
+    ],
+    detection_logic: 'AI-based Anomaly Detection (GSAP/Three.js visualized)',
+  },
+  admin_dashboard_integration: {
+    visuals: {
+      blockchain_health: 'Live node status and block height',
+      prevention_map: 'Real-time globe showing blocked IP origins',
+      threat_level: 'Dynamic meter based on failed hash validations',
+    },
+    actions: [
+      'Rollback to last verified Block',
+      'Revoke compromised node credentials',
+      'Export tamper-proof audit reports',
+    ],
+  },
+};
+
+const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
   const [activeSection, setActiveSection] = useState('classroom');
   const [navSearch, setNavSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1403,13 +1606,11 @@ const AdminPanel = ({ onLogout, darkMode, onToggleTheme }) => {
             <span className={`font-bold text-sm tracking-tight ${currentTheme.textPrimary}`}>RAJALAKSHMI INSTITUTE OF TECHNOLOGY</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={onToggleTheme}
-              aria-label="Toggle theme"
-              className={`p-2.5 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder} ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
+            <ThemeModeToggle
+              themeMode={themeMode}
+              onThemeModeChange={onThemeModeChange}
+              currentTheme={currentTheme}
+            />
             <button className={`p-2.5 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder} ${currentTheme.textPrimary} relative`}>
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full" />
@@ -1447,8 +1648,30 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
   const [predictCourseId, setPredictCourseId] = useState('CS23414');
   const [predictResult, setPredictResult] = useState(null);
   const [isPredicting, setIsPredicting] = useState(false);
+  const [securityConfig, setSecurityConfig] = useState(IMS_SECURITY_V2);
+  const [securityConfigLoading, setSecurityConfigLoading] = useState(false);
   
   const API_BASE = 'http://127.0.0.1:5001';
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadSecurityConfig = async () => {
+      setSecurityConfigLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/security/ims-v2`);
+        const data = await res.json().catch(() => null);
+        if (!cancelled && res.ok && data?.ims_security_v2) {
+          setSecurityConfig(data.ims_security_v2);
+        }
+      } catch {
+        // Keep frontend fallback if backend is offline.
+      } finally {
+        if (!cancelled) setSecurityConfigLoading(false);
+      }
+    };
+    loadSecurityConfig();
+    return () => { cancelled = true; };
+  }, []);
 
   const triggerMechanics = async () => {
     if (!predictEmail || !predictCourseId) return;
@@ -2117,8 +2340,113 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout }) => {
     );
   }
 
-  // Placements, Audit, Timetables, Directory, Crowd - placeholder
-  const placeholders = { placements: 'Placements', audit: 'Audit Logs', timetables: 'Exam Timetables', directory: 'Transport Directory', crowd: 'Crowd Flow' };
+  // Security architecture and immutable audit flow
+  if (section === 'audit') {
+    const chain = securityConfig?.blockchain_layer || IMS_SECURITY_V2.blockchain_layer;
+    const prevention = securityConfig?.prevention_system || IMS_SECURITY_V2.prevention_system;
+    const simulator = securityConfig?.attacking_system_simulator || IMS_SECURITY_V2.attacking_system_simulator;
+    const dashboard = securityConfig?.admin_dashboard_integration || IMS_SECURITY_V2.admin_dashboard_integration;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <span className="w-1 h-8 rounded-full bg-amber-500" />
+          <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>IMS Security v2 - Blockchain Audit Layer</h1>
+        </div>
+        <p className={`${currentTheme.textSecondary} text-sm`}>
+          Security control plane combining immutable audit logs, prevention pipelines, and attack simulation telemetry for rapid response.
+        </p>
+        <div className={`text-xs ${currentTheme.textSecondary}`}>
+          Source: {securityConfigLoading ? 'Loading from backend...' : 'Synced from backend endpoint /api/security/ims-v2 (fallback enabled)'}
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            { label: 'Blockchain Tech', value: chain.technology, icon: ShieldCheck, color: 'text-blue-500' },
+            { label: 'Consensus', value: chain.consensus, icon: CheckCircle2, color: 'text-emerald-500' },
+            { label: 'Core Function', value: chain.core_function, icon: FileText, color: 'text-indigo-500' },
+          ].map((card, idx) => (
+            <div key={idx} className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs uppercase font-bold ${currentTheme.textSecondary}`}>{card.label}</span>
+                <card.icon size={18} className={card.color} />
+              </div>
+              <p className={`${currentTheme.textPrimary} text-sm font-semibold`}>{card.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-3`}>Blockchain Layer - Data Anchored On Chain</h3>
+            <div className="space-y-2">
+              {chain.data_to_chain.map((entry) => (
+                <div key={entry} className={`flex items-center gap-2 p-2 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+                  <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                  <span className={`${currentTheme.textPrimary} text-sm font-medium`}>{entry}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-3`}>Prevention System</h3>
+            <p className={`${currentTheme.textSecondary} text-sm mb-3`}>{prevention.mechanism}</p>
+            <div className="space-y-2">
+              {Object.entries(prevention.features).map(([key, value]) => (
+                <div key={key} className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
+                  <p className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 mb-1">{key.replace('_', ' ')}</p>
+                  <p className={`${currentTheme.textPrimary} text-sm`}>{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-3 flex items-center gap-2`}><Target size={18} className="text-red-500" />Attacking System Simulator</h3>
+            <p className={`${currentTheme.textSecondary} text-sm mb-3`}>{simulator.purpose}</p>
+            <div className="space-y-2 mb-4">
+              {simulator.attack_vectors.map((vector) => (
+                <div key={vector} className="flex items-center gap-2 text-sm text-red-500">
+                  <AlertTriangle size={14} />
+                  <span>{vector}</span>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3">
+              <p className="text-[10px] uppercase font-bold text-red-500 mb-1">Detection Logic</p>
+              <p className={`${currentTheme.textPrimary} text-sm`}>{simulator.detection_logic}</p>
+            </div>
+          </div>
+
+          <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-3`}>Admin Dashboard Integration</h3>
+            <div className="space-y-2 mb-4">
+              {Object.entries(dashboard.visuals).map(([key, value]) => (
+                <div key={key} className={`p-2 rounded-lg ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+                  <p className={`text-[10px] uppercase font-bold ${currentTheme.textSecondary}`}>{key.replace('_', ' ')}</p>
+                  <p className={`${currentTheme.textPrimary} text-sm`}>{value}</p>
+                </div>
+              ))}
+            </div>
+            <h4 className={`${currentTheme.textPrimary} font-semibold text-sm mb-2`}>Rapid Actions</h4>
+            <div className="flex flex-wrap gap-2">
+              {dashboard.actions.map((action) => (
+                <button key={action} className="px-3 py-1.5 rounded-lg bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-semibold">
+                  {action}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Placements, Timetables, Directory, Crowd - placeholder
+  const placeholders = { placements: 'Placements', timetables: 'Exam Timetables', directory: 'Transport Directory', crowd: 'Crowd Flow' };
   const title = placeholders[section] || 'Dashboard';
   return (
     <div className="space-y-6">
@@ -2135,7 +2463,10 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [studentEmail, setStudentEmail] = useState(null);
-  const [darkMode, setDarkMode] = useState(true); // Defaulting to true as requested to see neon
+  const [themeMode, setThemeMode] = useState('system');
+  const [systemPrefersDark, setSystemPrefersDark] = useState(() =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 768);
   useEffect(() => {
     const handleResize = () => {
@@ -2150,7 +2481,40 @@ const App = () => {
   }, []);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [scrolled, setScrolled] = useState(false);
+  const darkMode = themeMode === 'system' ? systemPrefersDark : themeMode === 'dark';
   const currentTheme = darkMode ? themes.dark : themes.light;
+
+  useEffect(() => {
+    const storedThemeMode = localStorage.getItem(THEME_STORAGE_KEY);
+    if (storedThemeMode === 'light' || storedThemeMode === 'dark' || storedThemeMode === 'system') {
+      setThemeMode(storedThemeMode);
+    }
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleThemeChange = (event) => setSystemPrefersDark(event.matches);
+    mediaQuery.addEventListener('change', handleThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleThemeChange);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+  }, [themeMode]);
+
+  const handleThemeModeChange = (nextMode) => {
+    const animationCss = createThemeAnimation({ variant: 'circle', start: 'top-right', blur: false });
+    setThemeTransitionStyles(animationCss);
+
+    const applyMode = () => setThemeMode(nextMode);
+
+    if (!document.startViewTransition) {
+      applyMode();
+      return;
+    }
+
+    document.startViewTransition(applyMode);
+  };
 
   // Handle scroll for glassy header effect
   useEffect(() => {
@@ -2210,7 +2574,8 @@ const App = () => {
             setIsAdmin(false);
           }}
           darkMode={darkMode}
-          onToggleTheme={() => setDarkMode((d) => !d)}
+          themeMode={themeMode}
+          onThemeModeChange={handleThemeModeChange}
         />
       </div>
     );
@@ -2309,12 +2674,11 @@ const App = () => {
               />
             </div>
 
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-3 rounded-full ${currentTheme.card} ${currentTheme.neoBorder} shadow-sm transition-all hover:scale-105 ${darkMode ? 'text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.15)]' : 'text-slate-600'}`}
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
+            <ThemeModeToggle
+              themeMode={themeMode}
+              onThemeModeChange={handleThemeModeChange}
+              currentTheme={currentTheme}
+            />
 
             <button className={`relative p-3 rounded-full ${currentTheme.card} ${currentTheme.neoBorder} shadow-sm hover:scale-105 transition-all`}>
               <Bell size={18} className={currentTheme.textPrimary} />

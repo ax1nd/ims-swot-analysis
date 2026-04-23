@@ -6,3 +6,4 @@ scikit-learn>=1.1.0
 xgboost>=1.6.0
 pymysql>=1.1.0
 sqlalchemy>=2.0.0
+waitress>=3.0.0

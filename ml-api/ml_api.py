@@ -30,7 +30,7 @@ def load_data_api(filepath):
         connection_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
         try:
             engine = create_engine(connection_url)
-            query = \"\"\"
+            query = """
             SELECT
               c.course_code   AS 'Course ID',
               c.course_name   AS 'Course Name',
@@ -51,7 +51,7 @@ def load_data_api(filepath):
             JOIN courses c  ON c.id = m.course_id
             WHERE m.cat1_total IS NOT NULL AND m.cat2_total IS NOT NULL AND m.cat3_total IS NOT NULL
             ORDER BY s.email, c.course_code;
-            \"\"\"
+            """
             df = pd.read_sql(query, engine)
             if not df.empty:
                 print("Successfully loaded data from MySQL database.")

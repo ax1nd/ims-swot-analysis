@@ -1,0 +1,652 @@
+{
+  "summary": {
+    "totalRecords": 36,
+    "gradeDistribution": {
+      "A": 17,
+      "B": 6,
+      "C": 3,
+      "D": 4,
+      "F": 6
+    },
+    "avgMarksPerCourse": [
+      {
+        "course": "Design and Analysis of Algorithms",
+        "avgMark": 82.6
+      },
+      {
+        "course": "Database Management Systems",
+        "avgMark": 80.6
+      },
+      {
+        "course": "Theory of Computation",
+        "avgMark": 74.1
+      },
+      {
+        "course": "Machine Learning Techniques",
+        "avgMark": 72.0
+      },
+      {
+        "course": "Software Development Practices",
+        "avgMark": 67.3
+      },
+      {
+        "course": "Operating Systems",
+        "avgMark": 61.1
+      }
+    ],
+    "featureImportance": [
+      {
+        "feature": "Candidate Email Encoded",
+        "importance": 0.1633
+      },
+      {
+        "feature": "Course ID Encoded",
+        "importance": 0.0581
+      },
+      {
+        "feature": "Attempt ID",
+        "importance": 0.0
+      },
+      {
+        "feature": "Student_Avg_Mark",
+        "importance": 0.4173
+      },
+      {
+        "feature": "Student_Attempt_Count",
+        "importance": 0.0
+      },
+      {
+        "feature": "Course_Avg_Mark",
+        "importance": 0.3611
+      },
+      {
+        "feature": "Course_Attempt_Count",
+        "importance": 0.0
+      },
+      {
+        "feature": "Day_of_Week",
+        "importance": 0.0
+      },
+      {
+        "feature": "Month",
+        "importance": 0.0
+      }
+    ]
+  },
+  "results": {
+    "aarav.sharma@example.com": {
+      "name": "Aarav Sharma",
+      "email": "aarav.sharma@example.com",
+      "strengths": [
+        "Database Management Systems",
+        "Design and Analysis of Algorithms",
+        "Theory of Computation"
+      ],
+      "weaknesses": [
+        "Machine Learning Techniques",
+        "Operating Systems",
+        "Software Development Practices"
+      ],
+      "recommendations": [
+        {
+          "weakCourse": "Machine Learning Techniques",
+          "recommendedCourse": "Applied Deep Learning"
+        },
+        {
+          "weakCourse": "Operating Systems",
+          "recommendedCourse": "Kernel Compilation Basics"
+        },
+        {
+          "weakCourse": "Software Development Practices",
+          "recommendedCourse": "Agile & Scrum Bootcamps"
+        }
+      ],
+      "gradeDistribution": {
+        "A": 17,
+        "B": 6,
+        "C": 3,
+        "D": 4,
+        "F": 6
+      },
+      "avgMarksPerCourse": [
+        {
+          "course": "Design and Analysis of Algorithms",
+          "avgMark": 82.6
+        },
+        {
+          "course": "Database Management Systems",
+          "avgMark": 80.6
+        },
+        {
+          "course": "Theory of Computation",
+          "avgMark": 74.1
+        },
+        {
+          "course": "Machine Learning Techniques",
+          "avgMark": 72.0
+        },
+        {
+          "course": "Software Development Practices",
+          "avgMark": 67.3
+        },
+        {
+          "course": "Operating Systems",
+          "avgMark": 61.1
+        }
+      ],
+      "courses": [
+        {
+          "courseId": "AL23432",
+          "courseName": "Machine Learning Techniques",
+          "mark": 50,
+          "grade": "D"
+        },
+        {
+          "courseId": "CS23415",
+          "courseName": "Operating Systems",
+          "mark": 40,
+          "grade": "F"
+        },
+        {
+          "courseId": "CS23411",
+          "courseName": "Database Management Systems",
+          "mark": 85,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23413",
+          "courseName": "Theory of Computation",
+          "mark": 74,
+          "grade": "B"
+        },
+        {
+          "courseId": "CS23414",
+          "courseName": "Software Development Practices",
+          "mark": 56,
+          "grade": "D"
+        },
+        {
+          "courseId": "CS23431",
+          "courseName": "Design and Analysis of Algorithms",
+          "mark": 90,
+          "grade": "A"
+        }
+      ],
+      "avgMark": 65.8,
+      "totalCourses": 6,
+      "overallGrade": "C"
+    },
+    "aditya.kumar@example.com": {
+      "name": "Aditya Kumar",
+      "email": "aditya.kumar@example.com",
+      "strengths": [
+        "Database Management Systems",
+        "Design and Analysis of Algorithms",
+        "Machine Learning Techniques",
+        "Operating Systems",
+        "Software Development Practices",
+        "Theory of Computation"
+      ],
+      "weaknesses": [],
+      "recommendations": [],
+      "gradeDistribution": {
+        "A": 17,
+        "B": 6,
+        "C": 3,
+        "D": 4,
+        "F": 6
+      },
+      "avgMarksPerCourse": [
+        {
+          "course": "Design and Analysis of Algorithms",
+          "avgMark": 82.6
+        },
+        {
+          "course": "Database Management Systems",
+          "avgMark": 80.6
+        },
+        {
+          "course": "Theory of Computation",
+          "avgMark": 74.1
+        },
+        {
+          "course": "Machine Learning Techniques",
+          "avgMark": 72.0
+        },
+        {
+          "course": "Software Development Practices",
+          "avgMark": 67.3
+        },
+        {
+          "course": "Operating Systems",
+          "avgMark": 61.1
+        }
+      ],
+      "courses": [
+        {
+          "courseId": "AL23432",
+          "courseName": "Machine Learning Techniques",
+          "mark": 95,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23415",
+          "courseName": "Operating Systems",
+          "mark": 87,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23411",
+          "courseName": "Database Management Systems",
+          "mark": 91,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23413",
+          "courseName": "Theory of Computation",
+          "mark": 83,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23414",
+          "courseName": "Software Development Practices",
+          "mark": 94,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23431",
+          "courseName": "Design and Analysis of Algorithms",
+          "mark": 98,
+          "grade": "A"
+        }
+      ],
+      "avgMark": 91.3,
+      "totalCourses": 6,
+      "overallGrade": "A"
+    },
+    "ananya.gupta@example.com": {
+      "name": "Ananya Gupta",
+      "email": "ananya.gupta@example.com",
+      "strengths": [
+        "Database Management Systems",
+        "Design and Analysis of Algorithms",
+        "Machine Learning Techniques",
+        "Theory of Computation"
+      ],
+      "weaknesses": [
+        "Operating Systems",
+        "Software Development Practices"
+      ],
+      "recommendations": [
+        {
+          "weakCourse": "Operating Systems",
+          "recommendedCourse": "Kernel Compilation Basics"
+        },
+        {
+          "weakCourse": "Software Development Practices",
+          "recommendedCourse": "Agile & Scrum Bootcamps"
+        }
+      ],
+      "gradeDistribution": {
+        "A": 17,
+        "B": 6,
+        "C": 3,
+        "D": 4,
+        "F": 6
+      },
+      "avgMarksPerCourse": [
+        {
+          "course": "Design and Analysis of Algorithms",
+          "avgMark": 82.6
+        },
+        {
+          "course": "Database Management Systems",
+          "avgMark": 80.6
+        },
+        {
+          "course": "Theory of Computation",
+          "avgMark": 74.1
+        },
+        {
+          "course": "Machine Learning Techniques",
+          "avgMark": 72.0
+        },
+        {
+          "course": "Software Development Practices",
+          "avgMark": 67.3
+        },
+        {
+          "course": "Operating Systems",
+          "avgMark": 61.1
+        }
+      ],
+      "courses": [
+        {
+          "courseId": "AL23432",
+          "courseName": "Machine Learning Techniques",
+          "mark": 73,
+          "grade": "B"
+        },
+        {
+          "courseId": "CS23415",
+          "courseName": "Operating Systems",
+          "mark": 45,
+          "grade": "F"
+        },
+        {
+          "courseId": "CS23411",
+          "courseName": "Database Management Systems",
+          "mark": 88,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23413",
+          "courseName": "Theory of Computation",
+          "mark": 98,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23414",
+          "courseName": "Software Development Practices",
+          "mark": 38,
+          "grade": "F"
+        },
+        {
+          "courseId": "CS23431",
+          "courseName": "Design and Analysis of Algorithms",
+          "mark": 92,
+          "grade": "A"
+        }
+      ],
+      "avgMark": 72.3,
+      "totalCourses": 6,
+      "overallGrade": "B"
+    },
+    "ishaan.iyer@example.com": {
+      "name": "Ishaan Iyer",
+      "email": "ishaan.iyer@example.com",
+      "strengths": [
+        "Design and Analysis of Algorithms",
+        "Machine Learning Techniques",
+        "Operating Systems",
+        "Theory of Computation"
+      ],
+      "weaknesses": [
+        "Software Development Practices"
+      ],
+      "recommendations": [
+        {
+          "weakCourse": "Software Development Practices",
+          "recommendedCourse": "Agile & Scrum Bootcamps"
+        }
+      ],
+      "gradeDistribution": {
+        "A": 17,
+        "B": 6,
+        "C": 3,
+        "D": 4,
+        "F": 6
+      },
+      "avgMarksPerCourse": [
+        {
+          "course": "Design and Analysis of Algorithms",
+          "avgMark": 82.6
+        },
+        {
+          "course": "Database Management Systems",
+          "avgMark": 80.6
+        },
+        {
+          "course": "Theory of Computation",
+          "avgMark": 74.1
+        },
+        {
+          "course": "Machine Learning Techniques",
+          "avgMark": 72.0
+        },
+        {
+          "course": "Software Development Practices",
+          "avgMark": 67.3
+        },
+        {
+          "course": "Operating Systems",
+          "avgMark": 61.1
+        }
+      ],
+      "courses": [
+        {
+          "courseId": "AL23432",
+          "courseName": "Machine Learning Techniques",
+          "mark": 83,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23415",
+          "courseName": "Operating Systems",
+          "mark": 77,
+          "grade": "B"
+        },
+        {
+          "courseId": "CS23411",
+          "courseName": "Database Management Systems",
+          "mark": 69,
+          "grade": "C"
+        },
+        {
+          "courseId": "CS23413",
+          "courseName": "Theory of Computation",
+          "mark": 88,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23414",
+          "courseName": "Software Development Practices",
+          "mark": 56,
+          "grade": "D"
+        },
+        {
+          "courseId": "CS23431",
+          "courseName": "Design and Analysis of Algorithms",
+          "mark": 95,
+          "grade": "A"
+        }
+      ],
+      "avgMark": 78.0,
+      "totalCourses": 6,
+      "overallGrade": "B"
+    },
+    "saanvi.reddy@example.com": {
+      "name": "Saanvi Reddy",
+      "email": "saanvi.reddy@example.com",
+      "strengths": [
+        "Database Management Systems",
+        "Design and Analysis of Algorithms",
+        "Machine Learning Techniques",
+        "Software Development Practices",
+        "Theory of Computation"
+      ],
+      "weaknesses": [],
+      "recommendations": [],
+      "gradeDistribution": {
+        "A": 17,
+        "B": 6,
+        "C": 3,
+        "D": 4,
+        "F": 6
+      },
+      "avgMarksPerCourse": [
+        {
+          "course": "Design and Analysis of Algorithms",
+          "avgMark": 82.6
+        },
+        {
+          "course": "Database Management Systems",
+          "avgMark": 80.6
+        },
+        {
+          "course": "Theory of Computation",
+          "avgMark": 74.1
+        },
+        {
+          "course": "Machine Learning Techniques",
+          "avgMark": 72.0
+        },
+        {
+          "course": "Software Development Practices",
+          "avgMark": 67.3
+        },
+        {
+          "course": "Operating Systems",
+          "avgMark": 61.1
+        }
+      ],
+      "courses": [
+        {
+          "courseId": "AL23432",
+          "courseName": "Machine Learning Techniques",
+          "mark": 98,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23415",
+          "courseName": "Operating Systems",
+          "mark": 64,
+          "grade": "C"
+        },
+        {
+          "courseId": "CS23411",
+          "courseName": "Database Management Systems",
+          "mark": 90,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23413",
+          "courseName": "Theory of Computation",
+          "mark": 72,
+          "grade": "B"
+        },
+        {
+          "courseId": "CS23414",
+          "courseName": "Software Development Practices",
+          "mark": 83,
+          "grade": "A"
+        },
+        {
+          "courseId": "CS23431",
+          "courseName": "Design and Analysis of Algorithms",
+          "mark": 79,
+          "grade": "B"
+        }
+      ],
+      "avgMark": 81.0,
+      "totalCourses": 6,
+      "overallGrade": "A"
+    },
+    "vivaan.singh@example.com": {
+      "name": "Vivaan Singh",
+      "email": "vivaan.singh@example.com",
+      "strengths": [
+        "Software Development Practices"
+      ],
+      "weaknesses": [
+        "Design and Analysis of Algorithms",
+        "Machine Learning Techniques",
+        "Operating Systems",
+        "Theory of Computation"
+      ],
+      "recommendations": [
+        {
+          "weakCourse": "Design and Analysis of Algorithms",
+          "recommendedCourse": "Advanced Algorithms"
+        },
+        {
+          "weakCourse": "Machine Learning Techniques",
+          "recommendedCourse": "Applied Deep Learning"
+        },
+        {
+          "weakCourse": "Operating Systems",
+          "recommendedCourse": "Kernel Compilation Basics"
+        },
+        {
+          "weakCourse": "Theory of Computation",
+          "recommendedCourse": "Automata & Formal Languages"
+        }
+      ],
+      "gradeDistribution": {
+        "A": 17,
+        "B": 6,
+        "C": 3,
+        "D": 4,
+        "F": 6
+      },
+      "avgMarksPerCourse": [
+        {
+          "course": "Design and Analysis of Algorithms",
+          "avgMark": 82.6
+        },
+        {
+          "course": "Database Management Systems",
+          "avgMark": 80.6
+        },
+        {
+          "course": "Theory of Computation",
+          "avgMark": 74.1
+        },
+        {
+          "course": "Machine Learning Techniques",
+          "avgMark": 72.0
+        },
+        {
+          "course": "Software Development Practices",
+          "avgMark": 67.3
+        },
+        {
+          "course": "Operating Systems",
+          "avgMark": 61.1
+        }
+      ],
+      "courses": [
+        {
+          "courseId": "AL23432",
+          "courseName": "Machine Learning Techniques",
+          "mark": 33,
+          "grade": "F"
+        },
+        {
+          "courseId": "CS23415",
+          "courseName": "Operating Systems",
+          "mark": 54,
+          "grade": "D"
+        },
+        {
+          "courseId": "CS23411",
+          "courseName": "Database Management Systems",
+          "mark": 61,
+          "grade": "C"
+        },
+        {
+          "courseId": "CS23413",
+          "courseName": "Theory of Computation",
+          "mark": 30,
+          "grade": "F"
+        },
+        {
+          "courseId": "CS23414",
+          "courseName": "Software Development Practices",
+          "mark": 77,
+          "grade": "B"
+        },
+        {
+          "courseId": "CS23431",
+          "courseName": "Design and Analysis of Algorithms",
+          "mark": 42,
+          "grade": "F"
+        }
+      ],
+      "avgMark": 49.5,
+      "totalCourses": 6,
+      "overallGrade": "F"
+    }
+  },
+  "updatedAt": "2026-04-23T15:39:52Z"
+}

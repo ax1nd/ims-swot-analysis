@@ -503,11 +503,13 @@ _load_cache()
 
 
 if __name__ == '__main__':
-    debug_mode = os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true', 'yes')
-    print('SWOT ML API: http://127.0.0.1:5001')
+    from waitress import serve  # type: ignore
+    host = os.environ.get('API_HOST', '0.0.0.0')
+    port = int(os.environ.get('API_PORT', '5001'))
+    print(f'SWOT ML API: http://127.0.0.1:{port}')
     print('Endpoints: POST /api/swot/run, GET /api/swot/result/<email>, GET /api/swot/summary')
     print('           GET /api/swot/all-students, GET /api/swot/class-dashboard')
     print('           GET /api/swot/cache-status')
     print('           GET /api/export/report/pdf?email=..., POST /api/export/attendance/pdf, POST /api/export/timetable/pdf')
     print('           GET /api/security/ims-v2, GET /api/mobile/expo-optimization-v1')
-    app.run(host='0.0.0.0', port=5001, debug=debug_mode)
+    serve(app, host=host, port=port, threads=8)

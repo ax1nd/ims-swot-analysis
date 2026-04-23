@@ -1334,45 +1334,62 @@ const SignInPage = ({ onSignIn }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-900 bg-slate-100/80 dark:bg-[#0a0a0a]">
-      {/* Glassmorphism background */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-200/40 dark:bg-blue-500/10 blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-indigo-200/40 dark:bg-indigo-500/10 blur-[120px]"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full bg-white/5 dark:bg-white/[0.02] blur-3xl"></div>
+    <div className="min-h-screen p-4 md:p-8 font-sans text-slate-900 bg-slate-100/80 dark:bg-[#05070f] relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-8%] w-[36rem] h-[36rem] rounded-full bg-blue-300/30 dark:bg-blue-500/20 blur-[140px] animate-pulse" />
+        <div className="absolute bottom-[-24%] right-[-10%] w-[34rem] h-[34rem] rounded-full bg-violet-300/30 dark:bg-violet-500/20 blur-[140px] animate-pulse" />
       </div>
-      {/* Glassmorphism card */}
-      <div className="max-w-md w-full relative z-10 animate-fade-in
-        bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl
-        border border-white/60 dark:border-white/10
-        shadow-[0_8px_32px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.5)_inset]
-        dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset]
-        rounded-[32px] p-8 md:p-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-white/10 dark:from-white/[0.08] dark:to-transparent opacity-90" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent" />
-        <div className="relative z-10">
-          <div className="flex justify-center mb-8">
-            <div className="h-24 w-auto flex items-center justify-center p-2 rounded-2xl bg-white/5 dark:bg-white/10 shadow-sm border border-white/20">
-              <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="h-full object-contain drop-shadow-sm" />
+
+      <div className="relative z-10 max-w-6xl mx-auto min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] grid lg:grid-cols-[1.1fr_0.9fr] rounded-[32px] overflow-hidden border border-white/60 dark:border-white/10 backdrop-blur-2xl shadow-[0_24px_80px_rgba(15,23,42,0.16)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.45)] bg-white/40 dark:bg-white/[0.03]">
+        <section className="relative p-8 md:p-12 lg:p-14 flex flex-col justify-between bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.26),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.15),transparent_45%)]" />
+          <div className="relative z-10 space-y-8 animate-fade-in">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold tracking-wide">
+              <Sparkles size={14} />
+              RIT Smart Campus
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black leading-tight tracking-tight">Reimagined Student Experience</h1>
+              <p className="mt-4 text-sm md:text-base text-white/90 max-w-md leading-relaxed">
+                Unified access to attendance, performance insights, and timetable intelligence with seamless transitions.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3 max-w-md">
+              <div className="rounded-2xl border border-white/25 bg-white/10 px-4 py-3 backdrop-blur-sm transition-all duration-500 hover:bg-white/20">
+                <p className="text-xs uppercase tracking-widest text-white/75">Security</p>
+                <p className="mt-1 text-sm font-semibold">Role-based login</p>
+              </div>
+              <div className="rounded-2xl border border-white/25 bg-white/10 px-4 py-3 backdrop-blur-sm transition-all duration-500 hover:bg-white/20">
+                <p className="text-xs uppercase tracking-widest text-white/75">Analytics</p>
+                <p className="mt-1 text-sm font-semibold">Cached SWOT reports</p>
+              </div>
             </div>
           </div>
-
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Welcome Back</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">
-              {adminLoginMode ? 'Sign in with your admin credentials' : 'Sign in to RIT IMS — students or admin'}
-            </p>
+          <div className="relative z-10 mt-10">
+            <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="h-14 md:h-16 object-contain drop-shadow-lg" />
           </div>
+        </section>
 
-          {/* Google Sign-In — only @ritchennai.edu.in */}
-          {isFirebaseConfigured() && (
-            <>
-              <div className="mb-6">
+        <section className="p-6 md:p-10 lg:p-12 bg-white/60 dark:bg-[#090d16]/80">
+          <div className="max-w-md mx-auto h-full flex flex-col justify-center animate-fade-in">
+            <div className="mb-7">
+              <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                <ShieldCheck size={14} />
+                {adminLoginMode ? 'Admin access mode' : 'Student access mode'}
+              </div>
+              <h2 className="mt-4 text-2xl font-black text-slate-900 dark:text-slate-100">Sign in to continue</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {adminLoginMode ? 'Use admin credentials for dashboard controls.' : 'Access student dashboard and reports securely.'}
+              </p>
+            </div>
+
+            {isFirebaseConfigured() && (
+              <>
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={googleLoading || quickLoginMode !== null}
-                  className="w-full py-3.5 rounded-2xl bg-white dark:bg-white/10 border-2 border-slate-200 dark:border-white/20 hover:border-slate-300 dark:hover:border-white/30 text-slate-700 dark:text-slate-200 text-sm font-semibold flex items-center justify-center gap-3 transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+                  className="w-full py-3.5 rounded-2xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.14] text-slate-700 dark:text-slate-200 text-sm font-semibold flex items-center justify-center gap-3 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm hover:-translate-y-0.5"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -1380,88 +1397,82 @@ const SignInPage = ({ onSignIn }) => {
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                   </svg>
-                  {googleLoading ? 'Signing in…' : 'Sign in with Google'}
+                  {googleLoading ? 'Signing in...' : 'Continue with Google'}
                 </button>
-                <p className="text-slate-500 dark:text-slate-400 text-xs text-center mt-2">Only @{ALLOWED_EMAIL_DOMAIN} accounts</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs text-center mt-2">Allowed domain: @{ALLOWED_EMAIL_DOMAIN}</p>
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200/80 dark:border-white/10" /></div>
+                  <div className="relative flex justify-center text-xs"><span className="px-3 bg-white/90 dark:bg-[#090d16] text-slate-500 dark:text-slate-400">or use credentials</span></div>
+                </div>
+              </>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin('student')}
+                  disabled={quickLoginMode !== null}
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold shadow-[0_8px_20px_rgba(5,150,105,0.28)] transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  {quickLoginMode === 'student' ? 'Loading...' : 'Student Quick'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin('admin')}
+                  disabled={quickLoginMode !== null}
+                  className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold shadow-[0_8px_20px_rgba(124,58,237,0.28)] transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  {quickLoginMode === 'admin' ? 'Loading...' : 'Admin Quick'}
+                </button>
               </div>
 
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/30 dark:border-white/10" /></div>
-                <div className="relative flex justify-center text-xs"><span className="bg-white/40 dark:bg-white/[0.06] px-3 text-slate-500 dark:text-slate-400">or continue with</span></div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pl-1">User ID</label>
+                <input
+                  type="text"
+                  value={userId}
+                  onChange={(e) => { setUserId(e.target.value); setError(''); }}
+                  disabled={quickLoginMode !== null}
+                  placeholder="Enter your User ID"
+                  className="w-full bg-white/80 dark:bg-white/[0.06] border border-slate-200/70 dark:border-white/10 rounded-2xl py-3.5 px-4 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400/50 transition-all duration-300 shadow-sm"
+                />
               </div>
-            </>
-          )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pl-1">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  disabled={quickLoginMode !== null}
+                  placeholder="Enter your password"
+                  className="w-full bg-white/80 dark:bg-white/[0.06] border border-slate-200/70 dark:border-white/10 rounded-2xl py-3.5 px-4 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400/50 transition-all duration-300 shadow-sm"
+                />
+              </div>
+
+              {error && <p className="text-red-500 text-xs font-semibold text-center animate-fade-in">{error}</p>}
+
               <button
-                type="button"
-                onClick={() => handleQuickLogin('student')}
+                type="submit"
                 disabled={quickLoginMode !== null}
-                className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-[0_8px_22px_rgba(5,150,105,0.3)] transition-all"
+                className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold tracking-wide shadow-[0_10px_28px_rgba(37,99,235,0.32)] hover:shadow-[0_10px_32px_rgba(37,99,235,0.42)] hover:-translate-y-0.5 transition-all duration-300 outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {quickLoginMode === 'student' ? 'Loading Student…' : 'Student Login'}
+                Sign In
               </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin')}
-                disabled={quickLoginMode !== null}
-                className="w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-[0_8px_22px_rgba(124,58,237,0.3)] transition-all"
-              >
-                {quickLoginMode === 'admin' ? 'Loading Admin…' : 'Admin Login'}
-              </button>
-            </div>
-            <p className="text-[11px] text-center text-slate-500 dark:text-slate-400 -mt-2">
-              Quick preloader login buttons for faster developer testing.
-            </p>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pl-1">User ID</label>
-              <input
-                type="text"
-                value={userId}
-                onChange={(e) => { setUserId(e.target.value); setError(''); }}
-                disabled={quickLoginMode !== null}
-                placeholder="Enter your User ID"
-                className="w-full bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-white/50 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400/50 transition-all shadow-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pl-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                disabled={quickLoginMode !== null}
-                placeholder="Enter your password"
-                className="w-full bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-white/50 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400/50 transition-all shadow-sm"
-              />
-            </div>
-
-            {error && <p className="text-red-500 text-xs font-semibold text-center animate-fade-in">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={quickLoginMode !== null}
-              className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold tracking-wide shadow-[0_8px_24px_rgba(37,99,235,0.35)] hover:shadow-[0_8px_28px_rgba(37,99,235,0.45)] hover:-translate-y-0.5 transition-all outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4 border border-white/20"
-            >
-              Sign In
-            </button>
-
-            <div className="pt-4 border-t border-white/30 dark:border-white/10">
               <button
                 type="button"
                 onClick={() => { setAdminLoginMode(!adminLoginMode); setError(''); }}
                 disabled={quickLoginMode !== null}
-                className="w-full py-3 rounded-2xl bg-white/50 dark:bg-white/[0.06] hover:bg-white/70 dark:hover:bg-white/10 border border-white/50 dark:border-white/10 text-slate-600 dark:text-slate-300 text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+                className="w-full py-3 rounded-2xl bg-slate-100/90 dark:bg-white/[0.06] hover:bg-slate-200/90 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300"
               >
                 <ShieldCheck size={18} />
-                {adminLoginMode ? 'Back to student login' : 'Admin page login'}
+                {adminLoginMode ? 'Switch to student mode' : 'Switch to admin mode'}
               </button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
+        </section>
       </div>
     </div>
   );

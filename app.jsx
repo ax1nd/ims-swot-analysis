@@ -64,6 +64,43 @@ const ADMIN_USERNAME = '2117240020056';
 // Roll number -> student email (for SWOT analysis; matches sql/swot_cat_marks_schema_and_data.sql)
 const STUDENT_EMAIL_BY_ROLL = { '2117240020033': 'aarav.sharma@example.com' };
 const ADMIN_PASSWORD = '9025726185';
+const HOD_USERNAME = 'hod.cse';
+const HOD_PASSWORD = 'hod@1234';
+const TEACHER_USERNAME = 'teacher.cse';
+const TEACHER_PASSWORD = 'teach@1234';
+const ATTENDANCE_RISK_THRESHOLD = 75;
+const ATTENDANCE_DATA = [
+  { id: 1, regNo: '2117240020033', ccode: 'CS23411', cname: 'Database Management Systems', fname: 'PANDIARAJAN T.', section: 'III-CSE-A', year: 'III', attended: 26, total: 29, percentage: 89.66 },
+  { id: 2, regNo: '2117240020034', ccode: 'CS23413', cname: 'Theory of Computation', fname: 'ANGALAPARAMESWARI ANBAZHAGAN', section: 'III-CSE-A', year: 'III', attended: 30, total: 35, percentage: 85.71 },
+  { id: 3, regNo: '2117240020035', ccode: 'CS23414', cname: 'Software Development Practices', fname: 'SRINIVASAN M.L.', section: 'III-CSE-A', year: 'III', attended: 17, total: 19, percentage: 89.47 },
+  { id: 4, regNo: '2117240020036', ccode: 'CS23431', cname: 'Design and Analysis of Algorithms', fname: 'MURUGAN P', section: 'III-CSE-B', year: 'III', attended: 30, total: 33, percentage: 90.91 },
+  { id: 5, regNo: '2117240020037', ccode: 'AL23432', cname: 'Machine Learning Techniques', fname: 'ARAVINDH S', section: 'III-CSE-B', year: 'III', attended: 36, total: 43, percentage: 83.72 },
+  { id: 6, regNo: '2117240020038', ccode: 'CS23421', cname: 'Database Management Systems Laboratory', fname: 'PANDIARAJAN T.', section: 'III-CSE-B', year: 'III', attended: 13, total: 13, percentage: 100.0 },
+  { id: 7, regNo: '2117240020039', ccode: 'CS23IC2', cname: 'Visualization Tools', fname: 'ARAVINDH S', section: 'II-CSE-A', year: 'II', attended: 16, total: 16, percentage: 100.0 },
+  { id: 8, regNo: '2117240020040', ccode: 'CS23415', cname: 'Operating Systems', fname: 'SOWMYA S', section: 'III-CSE-A', year: 'III', attended: 14, total: 18, percentage: 70.33 },
+  { id: 9, regNo: '2117240020041', ccode: 'CS23423', cname: 'Operating Systems Laboratory', fname: 'SOWMYA S', section: 'III-CSE-B', year: 'III', attended: 5, total: 6, percentage: 83.33 },
+];
+
+const calculateAttendancePercentage = (attended, total) => {
+  if (!total || total <= 0) return 0;
+  return Math.round((Number(attended) * 10000) / Number(total)) / 100;
+};
+
+const isAttendanceRisk = (percentage) => Number(percentage) < ATTENDANCE_RISK_THRESHOLD;
+
+const pushAuditLog = (entry) => {
+  const key = 'ims_audit_logs';
+  const existing = JSON.parse(localStorage.getItem(key) || '[]');
+  const next = [
+    {
+      id: Date.now() + Math.random(),
+      timestamp: new Date().toISOString(),
+      ...entry,
+    },
+    ...existing,
+  ].slice(0, 100);
+  localStorage.setItem(key, JSON.stringify(next));
+};
 
 // Apple-inspired Glassy & Neon Theme Configuration
 const themes = {
@@ -262,6 +299,8 @@ const StatCard = ({ label, value, icon: Icon, colorClass, shadowClass, darkGlow,
 const TimetableContent = ({ currentTheme, darkMode }) => {
   const days = ['MON', 'TUES', 'WEDNES', 'THURS', 'FRI', 'SATUR'];
   const periods = [1, 2, 3, 4, 5, 6, 7];
+  const [dayFilter, setDayFilter] = useState('ALL');
+  const [exporting, setExporting] = useState(false);
 
   const schedule = {
     'MON': {
@@ -312,6 +351,34 @@ const TimetableContent = ({ currentTheme, darkMode }) => {
     'SATUR': {}
   };
 
+  const visibleDays = dayFilter === 'ALL' ? days : [dayFilter];
+  const totalClasses = visibleDays.reduce((acc, day) => acc + Object.keys(schedule[day] || {}).length, 0);
+
+  const exportTimetablePdf = async () => {
+    const rows = [];
+    visibleDays.forEach((day) => {
+      periods.forEach((period) => {
+        const cell = schedule[day]?.[period];
+        if (cell) {
+          rows.push({
+            day,
+            period,
+            subject: cell.subject,
+            courseCode: cell.staff || '-',
+          });
+        }
+      });
+    });
+    try {
+      setExporting(true);
+      await downloadBlobFile('/api/export/timetable/pdf', { rows }, 'Timetable_Report.pdf');
+    } catch (err) {
+      alert(err?.message || 'Unable to export timetable PDF.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="p-3 md:p-8 md:pt-4 max-w-[1600px] mx-auto w-full animate-fade-in">
       <div className={`${currentTheme.card} rounded-[24px] md:rounded-[32px] p-2 sm:p-4 md:p-6 relative overflow-hidden`}>
@@ -319,12 +386,29 @@ const TimetableContent = ({ currentTheme, darkMode }) => {
 
         <div className="relative z-10 w-full overflow-x-auto no-scrollbar">
           <div className="flex items-center justify-between mb-4 md:mb-6 px-1 md:px-0">
-            <h3 className={`${currentTheme.textPrimary} font-bold text-lg md:text-xl tracking-tight`}>
-              Weekly Timetable
-            </h3>
-            <div className="flex gap-2">
-              <button className={`px-3 py-1.5 rounded-xl backdrop-blur-md bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} ${currentTheme.textPrimary} text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10 transition-colors`}>
-                Export PDF
+            <div>
+              <h3 className={`${currentTheme.textPrimary} font-bold text-lg md:text-xl tracking-tight`}>
+                Weekly Timetable
+              </h3>
+              <p className={`${currentTheme.textSecondary} text-xs mt-1`}>
+                Showing {dayFilter === 'ALL' ? 'all days' : dayFilter} · {totalClasses} classes
+              </p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <select
+                value={dayFilter}
+                onChange={(e) => setDayFilter(e.target.value)}
+                className={`px-3 py-1.5 rounded-xl bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} ${currentTheme.textPrimary} text-xs font-semibold focus:outline-none`}
+              >
+                <option value="ALL">All Days</option>
+                {days.map((day) => <option key={day} value={day}>{day}</option>)}
+              </select>
+              <button
+                onClick={exportTimetablePdf}
+                disabled={exporting}
+                className={`px-3 py-1.5 rounded-xl backdrop-blur-md bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} ${currentTheme.textPrimary} text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10 transition-colors disabled:opacity-60`}
+              >
+                {exporting ? 'Exporting...' : 'Export PDF'}
               </button>
             </div>
           </div>
@@ -339,7 +423,7 @@ const TimetableContent = ({ currentTheme, darkMode }) => {
               </div>
             ))}
 
-            {days.map(day => (
+            {visibleDays.map(day => (
               <React.Fragment key={day}>
                 <div className={`p-2 font-bold text-[10px] lg:text-xs text-center ${currentTheme.bg} ${currentTheme.textPrimary} flex items-center justify-center border-t border-slate-200/50 dark:border-white/[0.05]`}>
                   {day}
@@ -600,20 +684,23 @@ const LeaveODContent = ({ currentTheme, darkMode }) => {
 
 const AttendanceContent = ({ currentTheme, darkMode }) => {
   const [selectedRows, setSelectedRows] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [riskFilter, setRiskFilter] = useState('all');
+  const [exportingPdf, setExportingPdf] = useState(false);
 
-  const attendanceData = [
-    { id: 1, ccode: 'CS23411', cname: 'Database Management Systems', fname: 'PANDIARAJAN T.', attended: 26, total: 29, percentage: 89.66 },
-    { id: 2, ccode: 'CS23413', cname: 'Theory of Computation', fname: 'ANGALAPARAMESWARI ANBAZHAGAN', attended: 30, total: 35, percentage: 85.71 },
-    { id: 3, ccode: 'CS23414', cname: 'Software Development Practices', fname: 'SRINIVASAN M.L.', attended: 17, total: 19, percentage: 89.47 },
-    { id: 4, ccode: 'CS23431', cname: 'Design and Analysis of Algorithms', fname: 'MURUGAN P', attended: 30, total: 33, percentage: 90.91 },
-    { id: 5, ccode: 'AL23432', cname: 'Machine Learning Techniques', fname: 'ARAVINDH S', attended: 36, total: 43, percentage: 83.72 },
-    { id: 6, ccode: 'CS23421', cname: 'Database Management Systems Laboratory', fname: 'PANDIARAJAN T.', attended: 13, total: 13, percentage: 100.00 },
-    { id: 7, ccode: 'CS23IC2', cname: 'Visualization Tools', fname: 'ARAVINDH S', attended: 16, total: 16, percentage: 100.00 },
-    { id: 8, ccode: 'CS23415', cname: 'Operating Systems', fname: 'SOWMYA S', attended: 14, total: 18, percentage: 70.33 },
-    { id: 9, ccode: 'CS23423', cname: 'Operating Systems Laboratory', fname: 'SOWMYA S', attended: 5, total: 6, percentage: 83.33 },
-  ];
+  const attendanceData = ATTENDANCE_DATA;
 
-  const handleSelectAll = () => setSelectedRows(attendanceData.map(d => d.id));
+  const filteredData = attendanceData.filter((row) => {
+    const q = searchText.trim().toLowerCase();
+    const matchesSearch = !q || [row.ccode, row.cname, row.fname].some((v) => String(v).toLowerCase().includes(q));
+    const matchesRisk =
+      riskFilter === 'all' ||
+      (riskFilter === 'critical' && isAttendanceRisk(row.percentage)) ||
+      (riskFilter === 'safe' && !isAttendanceRisk(row.percentage));
+    return matchesSearch && matchesRisk;
+  });
+
+  const handleSelectAll = () => setSelectedRows(filteredData.map(d => d.id));
   const handleDeselectAll = () => setSelectedRows([]);
 
   const handleCheckboxChange = (id) => {
@@ -624,9 +711,28 @@ const AttendanceContent = ({ currentTheme, darkMode }) => {
 
   const getExportData = () => {
     return selectedRows.length > 0
-      ? attendanceData.filter(d => selectedRows.includes(d.id))
-      : attendanceData;
+      ? filteredData.filter(d => selectedRows.includes(d.id))
+      : filteredData;
   };
+  const exportAttendancePdf = async () => {
+    const rows = getExportData().map((row) => ({
+      subjectCode: row.ccode,
+      subjectName: row.cname,
+      faculty: row.fname,
+      attended: row.attended,
+      total: row.total,
+      percentage: `${row.percentage.toFixed(2)}%`,
+    }));
+    try {
+      setExportingPdf(true);
+      await downloadBlobFile('/api/export/attendance/pdf', { rows }, 'Attendance_Report.pdf');
+    } catch (err) {
+      alert(err?.message || 'Unable to export attendance PDF.');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
 
   const handleCopy = () => {
     const data = getExportData();
@@ -701,7 +807,7 @@ const AttendanceContent = ({ currentTheme, darkMode }) => {
     if (btn === 'Copy') return handleCopy;
     if (btn === 'CSV') return handleCSV;
     if (btn === 'Excel') return handleExcel;
-    if (btn === 'PDF') return () => handlePrintPDF(true);
+    if (btn === 'PDF') return exportAttendancePdf;
     if (btn === 'Print') return () => handlePrintPDF(false);
     return () => { };
   };
@@ -749,18 +855,31 @@ const AttendanceContent = ({ currentTheme, darkMode }) => {
             <div className={`flex items-center gap-2 ${currentTheme.textSecondary} text-sm font-medium`}>
               Show
               <select className={`appearance-none bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} rounded-lg py-1 px-3 ${currentTheme.textPrimary} focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer shadow-sm`}>
-                <option>9</option>
+                <option>{filteredData.length}</option>
               </select>
               entries
             </div>
 
-            <div className="relative group w-full sm:w-64">
-              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${currentTheme.textSecondary} w-4 h-4 transition-colors group-focus-within:text-blue-500`} />
-              <input
-                type="text"
-                placeholder="Search..."
-                className={`w-full bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} rounded-xl py-2 pl-9 pr-4 text-sm ${currentTheme.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all shadow-sm`}
-              />
+            <div className="flex gap-2 w-full sm:w-auto">
+              <div className="relative group w-full sm:w-64">
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${currentTheme.textSecondary} w-4 h-4 transition-colors group-focus-within:text-blue-500`} />
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="Search by subject/faculty..."
+                  className={`w-full bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} rounded-xl py-2 pl-9 pr-4 text-sm ${currentTheme.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all shadow-sm`}
+                />
+              </div>
+              <select
+                value={riskFilter}
+                onChange={(e) => setRiskFilter(e.target.value)}
+                className={`bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} rounded-xl py-2 px-3 text-xs font-semibold ${currentTheme.textPrimary} focus:outline-none`}
+              >
+                <option value="all">All</option>
+                <option value="critical">Below 75%</option>
+                <option value="safe">75% & above</option>
+              </select>
             </div>
           </div>
 
@@ -782,39 +901,39 @@ const AttendanceContent = ({ currentTheme, darkMode }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5 dark:divide-white/[0.05]">
-                {attendanceData.map((row) => (
-                  <tr key={row.id} className={`transition-colors group ${row.percentage < 75 ? 'bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30 border border-red-500/30' : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.02]'}`}>
+                {filteredData.map((row) => (
+                  <tr key={row.id} className={`transition-colors group ${isAttendanceRisk(row.percentage) ? 'bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30 border border-red-500/30' : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.02]'}`}>
                     <td className="p-4 text-center">
                       <input type="checkbox" checked={selectedRows.includes(row.id)} onChange={() => handleCheckboxChange(row.id)} className="w-4 h-4 rounded appearance-none border border-slate-300 dark:border-slate-500 checked:bg-blue-500 checked:border-transparent transition-all cursor-pointer relative after:content-[''] after:absolute after:hidden checked:after:block after:left-1.5 after:top-0.5 after:w-1 after:h-2.5 after:border-white after:border-b-2 after:border-r-2 after:rotate-45" />
                     </td>
-                    <td className={`p-4 text-sm font-semibold ${row.percentage < 75 ? 'text-red-600 dark:text-red-400' : currentTheme.textPrimary}`}>{row.id}</td>
-                    <td className={`p-4 text-sm font-bold ${row.percentage < 75 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'} whitespace-nowrap`}>{row.ccode}</td>
-                    <td className={`p-4 text-sm font-semibold ${row.percentage < 75 ? 'text-red-600 dark:text-red-400' : currentTheme.textPrimary} max-w-[200px] sm:max-w-xs truncate`} title={row.cname}>
+                    <td className={`p-4 text-sm font-semibold ${isAttendanceRisk(row.percentage) ? 'text-red-600 dark:text-red-400' : currentTheme.textPrimary}`}>{row.id}</td>
+                    <td className={`p-4 text-sm font-bold ${isAttendanceRisk(row.percentage) ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'} whitespace-nowrap`}>{row.ccode}</td>
+                    <td className={`p-4 text-sm font-semibold ${isAttendanceRisk(row.percentage) ? 'text-red-600 dark:text-red-400' : currentTheme.textPrimary} max-w-[200px] sm:max-w-xs truncate`} title={row.cname}>
                       {row.cname}
-                      {row.percentage < 75 && (
+                      {isAttendanceRisk(row.percentage) && (
                         <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-red-500 text-white text-[9px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
                           Caution
                         </span>
                       )}
                     </td>
-                    <td className={`p-4 text-xs font-bold ${row.percentage < 75 ? 'text-red-500 dark:text-red-400' : currentTheme.textSecondary} uppercase tracking-wide`}>{row.fname}</td>
-                    <td className={`p-4 text-sm font-semibold ${row.percentage < 75 ? 'text-red-600 dark:text-red-400' : currentTheme.textPrimary} text-center`}>{row.attended}</td>
-                    <td className={`p-4 text-sm font-semibold ${row.percentage < 75 ? 'text-red-500 dark:text-red-400' : currentTheme.textSecondary} text-center`}>{row.total}</td>
+                    <td className={`p-4 text-xs font-bold ${isAttendanceRisk(row.percentage) ? 'text-red-500 dark:text-red-400' : currentTheme.textSecondary} uppercase tracking-wide`}>{row.fname}</td>
+                    <td className={`p-4 text-sm font-semibold ${isAttendanceRisk(row.percentage) ? 'text-red-600 dark:text-red-400' : currentTheme.textPrimary} text-center`}>{row.attended}</td>
+                    <td className={`p-4 text-sm font-semibold ${isAttendanceRisk(row.percentage) ? 'text-red-500 dark:text-red-400' : currentTheme.textSecondary} text-center`}>{row.total}</td>
                     <td className="p-4 text-center">
                       <div className="flex flex-col items-center justify-center gap-1">
-                        <span className={`text-sm font-bold ${row.percentage < 75 ? 'text-red-500' : 'text-emerald-500'}`}>
+                        <span className={`text-sm font-bold ${isAttendanceRisk(row.percentage) ? 'text-red-500' : 'text-emerald-500'}`}>
                           {row.percentage.toFixed(2)}%
                         </span>
                         <div className="w-16 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden hidden xl:block">
                           <div
-                            className={`h-full rounded-full ${row.percentage < 75 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'}`}
+                            className={`h-full rounded-full ${isAttendanceRisk(row.percentage) ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'}`}
                             style={{ width: `${row.percentage}%` }}
                           ></div>
                         </div>
                       </div>
                     </td>
                     <td className="p-4 text-center">
-                      <button className={`px-3 py-1.5 rounded-lg ${row.percentage < 75 ? 'bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white'} text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm`}>
+                      <button className={`px-3 py-1.5 rounded-lg ${isAttendanceRisk(row.percentage) ? 'bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white'} text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm`}>
                         View
                       </button>
                     </td>
@@ -826,7 +945,7 @@ const AttendanceContent = ({ currentTheme, darkMode }) => {
 
           {/* Pagination */}
           <div className="flex justify-between items-center mt-6 px-2">
-            <p className={`${currentTheme.textSecondary} text-xs font-medium`}>Showing 1 to 9 of 9 entries</p>
+            <p className={`${currentTheme.textSecondary} text-xs font-medium`}>Showing 1 to {filteredData.length} of {filteredData.length} entries</p>
             <div className="flex gap-1">
               <button className={`w-8 h-8 rounded-lg flex items-center justify-center bg-white/50 dark:bg-black/20 ${currentTheme.neoBorder} ${currentTheme.textSecondary} hover:bg-black/5 dark:hover:bg-white/10 transition-colors`} disabled>
                 <ChevronRight size={14} className="rotate-180 opacity-50" />
@@ -839,6 +958,9 @@ const AttendanceContent = ({ currentTheme, darkMode }) => {
               </button>
             </div>
           </div>
+          {exportingPdf && (
+            <p className="text-xs mt-3 text-blue-500 font-medium">Preparing attendance PDF...</p>
+          )}
 
         </div>
       </div>
@@ -1096,14 +1218,381 @@ const AcademicFeeContent = ({ currentTheme, darkMode }) => {
   );
 };
 
+const SubjectRegistrationContent = ({ currentTheme, darkMode }) => {
+  const [courses, setCourses] = useState([
+    { id: 'SUB101', title: 'Cloud Computing Fundamentals', credits: 3, faculty: 'Dr. Karthik M', seats: 8, selected: false },
+    { id: 'SUB205', title: 'Data Visualization Studio', credits: 2, faculty: 'Ms. Priya R', seats: 2, selected: false },
+    { id: 'SUB309', title: 'Cyber Security Essentials', credits: 3, faculty: 'Mr. Aravind S', seats: 0, selected: false },
+    { id: 'SUB412', title: 'Mobile App Prototyping', credits: 2, faculty: 'Ms. Nivetha P', seats: 6, selected: false },
+  ]);
+  const [flash, setFlash] = useState('');
+
+  const toggleCourse = (id) => {
+    setCourses((prev) => prev.map((course) => {
+      if (course.id !== id) return course;
+      if (!course.selected && course.seats <= 0) return course;
+      return { ...course, selected: !course.selected, seats: course.selected ? course.seats + 1 : course.seats - 1 };
+    }));
+  };
+
+  const selectedCourses = courses.filter((c) => c.selected);
+  const selectedCredits = selectedCourses.reduce((acc, c) => acc + c.credits, 0);
+
+  const saveRegistration = () => {
+    localStorage.setItem('student_subject_registration', JSON.stringify(selectedCourses));
+    setFlash('Subject registration updated successfully.');
+    window.setTimeout(() => setFlash(''), 2200);
+  };
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-7xl mx-auto w-full animate-fade-in space-y-6">
+      <div className={`${currentTheme.card} rounded-[24px] p-6 border ${currentTheme.neoBorder}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className={`${currentTheme.textPrimary} text-2xl font-bold`}>My Subject Registration</h2>
+            <p className={`${currentTheme.textSecondary} text-sm mt-1`}>Choose elective subjects and confirm your semester plan.</p>
+          </div>
+          <div className={`px-4 py-2 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+            <p className={`${currentTheme.textPrimary} text-sm font-semibold`}>Selected: {selectedCourses.length} · Credits: {selectedCredits}</p>
+          </div>
+        </div>
+      </div>
+      <div className="grid lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2 space-y-3">
+          {courses.map((course) => (
+            <div key={course.id} className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className={`${currentTheme.textPrimary} font-semibold`}>{course.title}</p>
+                  <p className={`${currentTheme.textSecondary} text-xs mt-1`}>{course.id} · {course.faculty} · {course.credits} credits</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-semibold ${course.seats > 0 ? 'text-emerald-500' : 'text-red-500'}`}>Seats: {course.seats}</span>
+                  <button
+                    onClick={() => toggleCourse(course.id)}
+                    disabled={!course.selected && course.seats <= 0}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${course.selected ? 'bg-red-500/15 text-red-500' : 'bg-blue-600 text-white disabled:opacity-50'}`}
+                  >
+                    {course.selected ? 'Drop' : 'Register'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder} h-fit`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold mb-3`}>Registration Summary</h3>
+          {selectedCourses.length > 0 ? (
+            <div className="space-y-2">
+              {selectedCourses.map((course) => (
+                <div key={course.id} className={`p-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+                  <p className={`${currentTheme.textPrimary} text-sm font-semibold`}>{course.id}</p>
+                  <p className={`${currentTheme.textSecondary} text-xs`}>{course.title}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className={`${currentTheme.textSecondary} text-sm`}>No subjects selected yet.</p>
+          )}
+          <button onClick={saveRegistration} className="w-full mt-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold">Save Registration</button>
+          {flash && <p className="text-xs text-emerald-500 font-semibold mt-2">{flash}</p>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const GradeBookContent = ({ currentTheme, darkMode }) => {
+  const grades = [
+    { code: 'CS23411', subject: 'Database Management Systems', internal: 89, grade: 'A', credits: 4 },
+    { code: 'CS23413', subject: 'Theory of Computation', internal: 84, grade: 'A', credits: 3 },
+    { code: 'CS23414', subject: 'Software Development Practices', internal: 82, grade: 'A', credits: 3 },
+    { code: 'CS23431', subject: 'Design and Analysis of Algorithms', internal: 79, grade: 'B+', credits: 4 },
+  ];
+  const gradePointMap = { 'A+': 10, A: 9, 'B+': 8, B: 7, C: 6 };
+  const credits = grades.reduce((acc, g) => acc + g.credits, 0);
+  const sgpa = (grades.reduce((acc, g) => acc + ((gradePointMap[g.grade] || 0) * g.credits), 0) / credits).toFixed(2);
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-6xl mx-auto w-full animate-fade-in space-y-6">
+      <div className={`${currentTheme.card} rounded-[24px] p-6 border ${currentTheme.neoBorder}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Grade Book</h2>
+          <div className="flex gap-2">
+            <span className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`}>Credits: {credits}</span>
+            <span className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-500">SGPA: {sgpa}</span>
+          </div>
+        </div>
+      </div>
+      <div className={`${currentTheme.card} rounded-[24px] p-4 md:p-6 border ${currentTheme.neoBorder}`}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className={`border-b ${currentTheme.border}`}>
+                <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Code</th>
+                <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Subject</th>
+                <th className={`p-3 text-center text-xs uppercase ${currentTheme.textSecondary}`}>Internal</th>
+                <th className={`p-3 text-center text-xs uppercase ${currentTheme.textSecondary}`}>Credits</th>
+                <th className={`p-3 text-center text-xs uppercase ${currentTheme.textSecondary}`}>Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {grades.map((row) => (
+                <tr key={row.code} className={`border-b ${currentTheme.border}`}>
+                  <td className="p-3 text-blue-600 dark:text-blue-400 font-semibold">{row.code}</td>
+                  <td className={`p-3 ${currentTheme.textPrimary}`}>{row.subject}</td>
+                  <td className={`p-3 text-center ${currentTheme.textPrimary}`}>{row.internal}</td>
+                  <td className={`p-3 text-center ${currentTheme.textPrimary}`}>{row.credits}</td>
+                  <td className="p-3 text-center"><span className="px-2 py-1 rounded-lg bg-blue-500/15 text-blue-500 text-xs font-semibold">{row.grade}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MessagesContent = ({ currentTheme, darkMode }) => {
+  const [messages, setMessages] = useState([
+    { id: 1, from: 'Dept Office', subject: 'Fee receipt available', time: 'Today', unread: true },
+    { id: 2, from: 'Class Advisor', subject: 'Project review at 2 PM', time: 'Yesterday', unread: false },
+  ]);
+  const [draft, setDraft] = useState('');
+
+  const sendMessage = () => {
+    if (!draft.trim()) return;
+    setMessages((prev) => [{ id: Date.now(), from: 'You', subject: draft.trim(), time: 'Now', unread: false }, ...prev]);
+    setDraft('');
+  };
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-6xl mx-auto w-full animate-fade-in space-y-6">
+      <div className={`${currentTheme.card} rounded-[24px] p-6 border ${currentTheme.neoBorder}`}>
+        <h2 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Messages</h2>
+        <p className={`${currentTheme.textSecondary} text-sm mt-1`}>Stay updated with department and advisor communication.</p>
+      </div>
+      <div className="grid lg:grid-cols-3 gap-5">
+        <div className={`lg:col-span-2 ${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder} space-y-2`}>
+          {messages.map((msg) => (
+            <div key={msg.id} className={`p-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} flex items-center justify-between`}>
+              <div>
+                <p className={`${currentTheme.textPrimary} text-sm font-semibold`}>{msg.subject}</p>
+                <p className={`${currentTheme.textSecondary} text-xs`}>{msg.from}</p>
+              </div>
+              <div className="text-right">
+                <p className={`${currentTheme.textSecondary} text-xs`}>{msg.time}</p>
+                {msg.unread && <span className="text-[10px] text-red-500 font-semibold">Unread</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}>
+          <h3 className={`${currentTheme.textPrimary} font-semibold mb-2`}>Quick Message</h3>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={5}
+            placeholder="Write to class advisor..."
+            className={`w-full p-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary} text-sm`}
+          />
+          <button onClick={sendMessage} className="w-full mt-3 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm">Send</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StudentChangePasswordContent = ({ currentTheme, darkMode }) => {
+  const [currentPwd, setCurrentPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [status, setStatus] = useState('');
+
+  const updatePassword = (e) => {
+    e.preventDefault();
+    if (newPwd.length < 8) {
+      setStatus('New password must be at least 8 characters.');
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      setStatus('New password and confirm password do not match.');
+      return;
+    }
+    setStatus('Password updated successfully.');
+    setCurrentPwd('');
+    setNewPwd('');
+    setConfirmPwd('');
+  };
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-3xl mx-auto w-full animate-fade-in">
+      <div className={`${currentTheme.card} rounded-[24px] p-6 md:p-8 border ${currentTheme.neoBorder}`}>
+        <h2 className={`${currentTheme.textPrimary} text-2xl font-bold mb-2`}>Change Password</h2>
+        <p className={`${currentTheme.textSecondary} text-sm mb-6`}>Use a strong password with minimum 8 characters.</p>
+        <form onSubmit={updatePassword} className="space-y-4">
+          <div>
+            <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary}`}>Current Password</label>
+            <input type="password" value={currentPwd} onChange={(e) => setCurrentPwd(e.target.value)} className={`w-full mt-1 px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+          </div>
+          <div>
+            <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary}`}>New Password</label>
+            <input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} className={`w-full mt-1 px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+          </div>
+          <div>
+            <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary}`}>Confirm Password</label>
+            <input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} className={`w-full mt-1 px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+          </div>
+          <button type="submit" className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold">Update Password</button>
+          {status && <p className={`text-sm font-medium ${status.includes('successfully') ? 'text-emerald-500' : 'text-red-500'}`}>{status}</p>}
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const CgpaCalculatorContent = ({ currentTheme, darkMode }) => {
+  const [semesters, setSemesters] = useState([
+    { id: 1, gpa: '', credits: '22' },
+    { id: 2, gpa: '', credits: '21' },
+    { id: 3, gpa: '', credits: '20' },
+    { id: 4, gpa: '', credits: '19' },
+  ]);
+
+  const updateSemester = (id, key, value) => {
+    setSemesters((prev) => prev.map((sem) => (sem.id === id ? { ...sem, [key]: value } : sem)));
+  };
+
+  const addSemester = () => {
+    setSemesters((prev) => [...prev, { id: prev.length + 1, gpa: '', credits: '20' }]);
+  };
+
+  const resetAll = () => {
+    setSemesters((prev) => prev.map((sem) => ({ ...sem, gpa: '' })));
+  };
+
+  const totals = semesters.reduce(
+    (acc, sem) => {
+      const gpa = Number(sem.gpa);
+      const credits = Number(sem.credits);
+      if (Number.isFinite(gpa) && Number.isFinite(credits) && gpa > 0 && credits > 0) {
+        acc.weighted += gpa * credits;
+        acc.credits += credits;
+      }
+      return acc;
+    },
+    { weighted: 0, credits: 0 }
+  );
+
+  const cgpa = totals.credits > 0 ? (totals.weighted / totals.credits).toFixed(2) : '0.00';
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-5xl mx-auto w-full animate-fade-in space-y-6">
+      <div className={`${currentTheme.card} rounded-[24px] p-6 border ${currentTheme.neoBorder}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className={`${currentTheme.textPrimary} text-2xl font-bold`}>CGPA Calculator</h2>
+            <p className={`${currentTheme.textSecondary} text-sm mt-1`}>Enter semester GPA and credits to compute cumulative CGPA.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-500 text-sm font-semibold">CGPA: {cgpa}</span>
+            <button onClick={resetAll} className="px-3 py-1.5 rounded-xl bg-red-500/15 text-red-500 text-xs font-semibold">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div className={`${currentTheme.card} rounded-[24px] p-4 md:p-6 border ${currentTheme.neoBorder}`}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[540px]">
+            <thead>
+              <tr className={`border-b ${currentTheme.border}`}>
+                <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Semester</th>
+                <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>GPA (0-10)</th>
+                <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Credits</th>
+                <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Weighted</th>
+              </tr>
+            </thead>
+            <tbody>
+              {semesters.map((sem) => {
+                const gpa = Number(sem.gpa) || 0;
+                const credits = Number(sem.credits) || 0;
+                const weighted = (gpa * credits).toFixed(2);
+                return (
+                  <tr key={sem.id} className={`border-b ${currentTheme.border}`}>
+                    <td className={`p-3 ${currentTheme.textPrimary} font-semibold`}>Sem {sem.id}</td>
+                    <td className="p-3">
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.01"
+                        value={sem.gpa}
+                        onChange={(e) => updateSemester(sem.id, 'gpa', e.target.value)}
+                        placeholder="e.g. 8.42"
+                        className={`w-full px-3 py-2 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`}
+                      />
+                    </td>
+                    <td className="p-3">
+                      <input
+                        type="number"
+                        min="1"
+                        max="40"
+                        step="1"
+                        value={sem.credits}
+                        onChange={(e) => updateSemester(sem.id, 'credits', e.target.value)}
+                        className={`w-full px-3 py-2 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`}
+                      />
+                    </td>
+                    <td className="p-3 text-blue-600 dark:text-blue-400 font-semibold">{weighted}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between mt-4 gap-3">
+          <button onClick={addSemester} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold">
+            Add Semester
+          </button>
+          <p className={`${currentTheme.textSecondary} text-xs`}>
+            Total Credits Counted: <span className={`${currentTheme.textPrimary} font-semibold`}>{totals.credits}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SWOT_API_BASE = 'http://127.0.0.1:5001';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+const downloadBlobFile = async (endpoint, payload, filenameFallback) => {
+  const res = await fetch(`${SWOT_API_BASE}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || 'Download failed');
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filenameFallback;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloadingReport, setDownloadingReport] = useState(false);
   const email = studentEmail || 'aarav.sharma@example.com';
 
   useEffect(() => {
@@ -1158,13 +1647,44 @@ const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
   const gradePieData = Object.entries(gradeDist).map(([name, value]) => ({ name, value }));
   const avgCourse = (data.avgMarksPerCourse || []).slice(0, 8);
 
+  const downloadReportPdf = async () => {
+    try {
+      setDownloadingReport(true);
+      const res = await fetch(`${SWOT_API_BASE}/api/export/report/pdf?email=${encodeURIComponent(email)}`);
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.error || 'Unable to export report.');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Student_SWOT_Report.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err?.message || 'Unable to export report.');
+    } finally {
+      setDownloadingReport(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-10 md:pt-4 max-w-7xl mx-auto w-full animate-fade-in space-y-8">
-      <div className="flex items-center gap-3">
-        <span className="w-1 h-8 rounded-full bg-blue-500" />
-        <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>My SWOT Analysis</h1>
-        {data.overallGrade && <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${gradeBg(data.overallGrade)} ${gradeColor(data.overallGrade)}`}>{data.overallGrade}</span>}
-        {data.avgMark && <span className={`${currentTheme.textSecondary} text-sm font-medium`}>Avg: {data.avgMark}</span>}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="w-1 h-8 rounded-full bg-blue-500" />
+          <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>My SWOT Analysis</h1>
+          {data.overallGrade && <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${gradeBg(data.overallGrade)} ${gradeColor(data.overallGrade)}`}>{data.overallGrade}</span>}
+          {data.avgMark && <span className={`${currentTheme.textSecondary} text-sm font-medium`}>Avg: {data.avgMark}</span>}
+        </div>
+        <button
+          onClick={downloadReportPdf}
+          disabled={downloadingReport}
+          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-60"
+        >
+          {downloadingReport ? 'Exporting...' : 'Export Report PDF'}
+        </button>
       </div>
       <p className={`${currentTheme.textSecondary} text-sm`}>Performance strengths, weaknesses, and AI-backed recommendations.</p>
 
@@ -1287,10 +1807,19 @@ const SignInPage = ({ onSignIn }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (userId === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      onSignIn({ isAdmin: true });
+      pushAuditLog({ actor: userId, type: 'login_success', message: 'Admin login success' });
+      onSignIn({ role: 'admin' });
+    } else if (userId === HOD_USERNAME && password === HOD_PASSWORD) {
+      pushAuditLog({ actor: userId, type: 'login_success', message: 'HOD login success' });
+      onSignIn({ role: 'hod' });
+    } else if (userId === TEACHER_USERNAME && password === TEACHER_PASSWORD) {
+      pushAuditLog({ actor: userId, type: 'login_success', message: 'Teacher login success' });
+      onSignIn({ role: 'teacher' });
     } else if (userId === '2117240020033' && password === '0123456789') {
-      onSignIn({ isAdmin: false, email: STUDENT_EMAIL_BY_ROLL[userId] || null });
+      pushAuditLog({ actor: userId, type: 'login_success', message: 'Student login success' });
+      onSignIn({ role: 'student', email: STUDENT_EMAIL_BY_ROLL[userId] || null });
     } else {
+      pushAuditLog({ actor: userId || 'unknown', type: 'login_failed', message: 'Invalid login attempt' });
       setError('Invalid User ID or Password');
     }
   };
@@ -1306,7 +1835,8 @@ const SignInPage = ({ onSignIn }) => {
         setError(`Only @${ALLOWED_EMAIL_DOMAIN} accounts are allowed. Please sign in with your RIT Chennai email.`);
         return;
       }
-      onSignIn({ isAdmin: false, email });
+      pushAuditLog({ actor: email, type: 'login_success', message: 'Student Google login success' });
+      onSignIn({ role: 'student', email });
     } catch (err) {
       if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
         setError('');
@@ -1325,32 +1855,42 @@ const SignInPage = ({ onSignIn }) => {
     // Short preloader gives immediate feedback for faster dev flow.
     window.setTimeout(() => {
       if (mode === 'admin') {
-        onSignIn({ isAdmin: true });
+        pushAuditLog({ actor: ADMIN_USERNAME, type: 'login_success', message: 'Admin quick login success' });
+        onSignIn({ role: 'admin' });
+      } else if (mode === 'hod') {
+        pushAuditLog({ actor: HOD_USERNAME, type: 'login_success', message: 'HOD quick login success' });
+        onSignIn({ role: 'hod' });
       } else {
-        onSignIn({ isAdmin: false, email: STUDENT_EMAIL_BY_ROLL['2117240020033'] || null });
+        pushAuditLog({ actor: '2117240020033', type: 'login_success', message: 'Student quick login success' });
+        onSignIn({ role: 'student', email: STUDENT_EMAIL_BY_ROLL['2117240020033'] || null });
       }
       setQuickLoginMode(null);
     }, 350);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-900 bg-slate-100/80 dark:bg-[#0a0a0a]">
+    <div className="min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-slate-900 bg-slate-100/80 dark:bg-[#0a0a0a]">
       {/* Glassmorphism background */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-200/40 dark:bg-blue-500/10 blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-indigo-200/40 dark:bg-indigo-500/10 blur-[120px]"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full bg-white/5 dark:bg-white/[0.02] blur-3xl"></div>
       </div>
-      {/* Glassmorphism card */}
-      <div className="max-w-md w-full relative z-10 animate-fade-in
-        bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl
-        border border-white/60 dark:border-white/10
-        shadow-[0_8px_32px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.5)_inset]
-        dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset]
-        rounded-[32px] p-8 md:p-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-white/10 dark:from-white/[0.08] dark:to-transparent opacity-90" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent" />
-        <div className="relative z-10">
+      <div className="max-w-5xl w-full relative z-10 grid lg:grid-cols-[1fr_1.1fr] gap-4 animate-fade-in">
+        <div className="hidden lg:flex rounded-[32px] p-10 bg-gradient-to-br from-blue-700 to-indigo-700 text-white shadow-[0_20px_60px_rgba(37,99,235,0.35)]">
+          <div className="my-auto">
+            <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="w-auto h-16 object-contain mb-6" />
+            <h2 className="text-3xl font-black tracking-tight">RIT IMS Portal</h2>
+            <p className="text-blue-100/90 text-sm mt-3 max-w-sm">
+              Smart access for Students, HOD, Teachers, and Admin with analytics, attendance insights, and secure workflows.
+            </p>
+          </div>
+        </div>
+        {/* Glassmorphism card */}
+        <div className="relative bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.5)_inset] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] rounded-[32px] p-6 md:p-8 lg:p-10 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-white/10 dark:from-white/[0.08] dark:to-transparent opacity-90" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent" />
+          <div className="relative z-10">
           <div className="flex justify-center mb-8">
             <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="w-auto h-20 object-contain" />
           </div>
@@ -1391,7 +1931,7 @@ const SignInPage = ({ onSignIn }) => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => handleQuickLogin('student')}
@@ -1399,6 +1939,14 @@ const SignInPage = ({ onSignIn }) => {
                 className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-[0_8px_22px_rgba(5,150,105,0.3)] transition-all"
               >
                 {quickLoginMode === 'student' ? 'Loading Student…' : 'Student Login'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('hod')}
+                disabled={quickLoginMode !== null}
+                className="w-full py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-[0_8px_22px_rgba(217,119,6,0.3)] transition-all"
+              >
+                {quickLoginMode === 'hod' ? 'Loading HOD…' : 'HOD Login'}
               </button>
               <button
                 type="button"
@@ -1461,12 +2009,17 @@ const SignInPage = ({ onSignIn }) => {
           </form>
         </div>
       </div>
+      </div>
     </div>
   );
 };
 
 // RIT Digital Twin | Smart Campus - Admin Panel (reference-based design)
 const ADMIN_NAV = [
+  { id: 'hodDashboard', label: 'HOD Dashboard', icon: LayoutDashboard },
+  { id: 'adminDashboard', label: 'Admin Dashboard', icon: ShieldCheck },
+  { id: 'userMgmt', label: 'User Management', icon: Users },
+  { id: 'systemControl', label: 'System Control', icon: Settings },
   { id: 'placements', label: 'Placements', icon: Briefcase },
   { id: 'courseData', label: 'Course Data', icon: BookOpen },
   { id: 'swot', label: 'SWOT Analysis', icon: Activity },
@@ -1525,8 +2078,8 @@ const IMS_SECURITY_V2 = {
   },
 };
 
-const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
-  const [activeSection, setActiveSection] = useState('classroom');
+const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange, role = 'admin' }) => {
+  const [activeSection, setActiveSection] = useState(role === 'hod' ? 'hodDashboard' : 'adminDashboard');
   const [navSearch, setNavSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [securityAlerts, setSecurityAlerts] = useState([]);
@@ -1535,12 +2088,20 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
   const [liveAlert, setLiveAlert] = useState(null);
   const currentTheme = darkMode ? themes.dark : themes.light;
   const API_BASE = 'http://127.0.0.1:5001';
+  const adminToken = localStorage.getItem('ADMIN_API_TOKEN') || '';
+  const visibleNav = ADMIN_NAV.filter((item) => {
+    if (role === 'hod') return ['hodDashboard', 'swot', 'audit', 'classroom', 'results', 'directory', 'password'].includes(item.id);
+    if (role === 'teacher') return ['classroom', 'swot', 'results', 'password'].includes(item.id);
+    return true;
+  });
 
   useEffect(() => {
     let cancelled = false;
     const pollAlerts = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/security/alerts?limit=20`);
+        const res = await fetch(`${API_BASE}/api/security/alerts?limit=20`, {
+          headers: adminToken ? { 'X-Admin-Token': adminToken } : {},
+        });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data?.alerts || cancelled) return;
         const alerts = data.alerts;
@@ -1564,7 +2125,7 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [API_BASE, hasAlertBaseline, latestAlertId]);
+  }, [API_BASE, hasAlertBaseline, latestAlertId, adminToken]);
 
   return (
     <div className={`theme-smooth min-h-screen ${currentTheme.bg} font-sans flex`}>
@@ -1576,42 +2137,38 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
       </div>
 
       {/* Mobile overlay */}
-      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/35 backdrop-blur-sm z-40 md:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      {/* RIT-style Sidebar - Dark glass */}
-      <aside className={`w-64 flex-shrink-0 fixed h-full z-50 flex flex-col transform transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-slate-900/90' : 'bg-slate-800/95'} backdrop-blur-2xl border-r border-white/10`}>
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center">
-              <div className="w-4 h-4 rounded-full bg-amber-500" />
-            </div>
-            <span className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-white'}`}>rit</span>
+      {/* Glassmorphic Sidebar */}
+      <aside className={`w-[280px] flex-shrink-0 fixed h-full z-50 flex flex-col transform transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${currentTheme.sidebar}`}>
+        <div className="p-5 border-b border-white/20 dark:border-white/10">
+          <div className="flex items-center gap-3 mb-3">
+            <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="w-auto h-10 object-contain" />
+            <span className={`text-base font-bold ${currentTheme.textPrimary}`}>RIT Admin</span>
           </div>
-          <p className={`text-[10px] uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-300'}`}>Rajalakshmi Institute of Technology</p>
+          <p className={`text-[11px] uppercase tracking-wider ${currentTheme.textSecondary}`}>Rajalakshmi Institute of Technology</p>
         </div>
-        <div className="p-3 border-b border-white/10">
+        <div className="p-4 border-b border-white/20 dark:border-white/10">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${currentTheme.textSecondary}`} />
             <input
               type="text"
               placeholder="Search functionalities..."
               value={navSearch}
               onChange={(e) => setNavSearch(e.target.value)}
-              className={`w-full pl-9 pr-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-white/5 text-slate-200 placeholder:text-slate-500 border border-white/5' : 'bg-white/10 text-white placeholder:text-slate-400 border-white/10'} focus:outline-none focus:ring-1 focus:ring-amber-500/50`}
+              className={`w-full pl-10 pr-3 py-2.5 rounded-xl text-sm ${currentTheme.card} ${currentTheme.neoBorder} ${currentTheme.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30`}
             />
           </div>
         </div>
-        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
-          {ADMIN_NAV.filter(n => !navSearch || n.label.toLowerCase().includes(navSearch.toLowerCase())).map((item) => {
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
+          {visibleNav.filter(n => !navSearch || n.label.toLowerCase().includes(navSearch.toLowerCase())).map((item) => {
             const isActive = activeSection === item.id;
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg text-left text-sm transition-colors border-l-2 ${isActive ? 'border-l-amber-500' : 'border-l-transparent'} ${isActive
-                  ? darkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-white/15 text-white'
-                  : `${darkMode ? 'text-slate-400 hover:bg-white/5 hover:text-slate-200' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}`}
+                className={`w-full flex items-center gap-3 pl-4 pr-3 py-3 rounded-xl text-left text-sm transition-all ${isActive ? `${currentTheme.sidebarActive} scale-[1.01]` : `${currentTheme.sidebarText} hover:bg-white/40 dark:hover:bg-white/[0.06]`}`}
               >
                 <Icon size={18} strokeWidth={2} />
                 <span>{item.label}</span>
@@ -1619,8 +2176,8 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
             );
           })}
         </nav>
-        <div className="p-4 border-t border-white/10">
-          <div onClick={onLogout} className="flex items-center justify-between p-3 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-500 cursor-pointer transition-colors group">
+        <div className="p-4 border-t border-white/20 dark:border-white/10">
+          <div onClick={onLogout} className={`flex items-center justify-between p-3 rounded-xl hover:bg-red-500/10 ${currentTheme.textSecondary} hover:text-red-500 cursor-pointer transition-colors group ${currentTheme.neoBorder}`}>
             <span className="text-sm font-semibold tracking-wide">Logout</span>
             <LogOut size={18} className="group-hover:translate-x-1 transition-transform" />
           </div>
@@ -1628,17 +2185,22 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
       </aside>
 
       {/* Main layout */}
-      <div className="flex-1 flex flex-col md:ml-64 min-h-screen">
+      <div className="flex-1 flex flex-col md:ml-[280px] min-h-screen">
         {/* RIT-style Header */}
-        <header className={`sticky top-0 z-40 ${currentTheme.headerBg} backdrop-blur-2xl border-b ${currentTheme.border} px-4 md:px-6 h-16 flex items-center justify-between`}>
-          <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"><Menu size={24} className={currentTheme.textPrimary} /></button>
+        <header className={`sticky top-0 z-40 ${currentTheme.headerBg} backdrop-blur-2xl border-b ${currentTheme.border} px-4 md:px-8 h-20 flex items-center justify-between`}>
+          <button onClick={() => setSidebarOpen(true)} className={`md:hidden p-2 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder}`}><Menu size={24} className={currentTheme.textPrimary} /></button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center overflow-hidden">
-              <svg viewBox="0 0 24 24" className="w-6 h-6 text-emerald-600" fill="currentColor"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" /></svg>
-            </div>
-            <span className={`font-bold text-sm tracking-tight ${currentTheme.textPrimary}`}>RAJALAKSHMI INSTITUTE OF TECHNOLOGY</span>
+            <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="w-auto h-9 object-contain" />
+            <span className={`font-bold text-sm md:text-base tracking-tight ${currentTheme.textPrimary}`}>RAJALAKSHMI INSTITUTE OF TECHNOLOGY</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 md:gap-3">
+            <button
+              onClick={() => setActiveSection('audit')}
+              className={`hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder} text-xs font-semibold ${currentTheme.textPrimary}`}
+            >
+              <AlertTriangle size={14} className={securityAlerts.length ? 'text-red-500' : 'text-emerald-500'} />
+              {securityAlerts.length ? `${securityAlerts.length} live alerts` : 'Security stable'}
+            </button>
             <ThemeModeToggle
               themeMode={themeMode}
               onThemeModeChange={onThemeModeChange}
@@ -1654,19 +2216,19 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full" />
               )}
             </button>
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder}`}>
+            <div className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.card} ${currentTheme.neoBorder}`}>
               <User size={18} className={currentTheme.textSecondary} />
               <span className={`text-xs font-semibold ${currentTheme.textPrimary}`}>ADMIN@RITCHENNAI.EDU.IN</span>
             </div>
-            <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center gap-2">
+            <button className="hidden sm:flex px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold items-center gap-2 shadow-[0_6px_18px_rgba(37,99,235,0.25)]">
               <MessageSquare size={16} /> Chat
             </button>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-6 overflow-auto">
-          <AdminContentSection section={activeSection} currentTheme={currentTheme} darkMode={darkMode} onLogout={onLogout} securityAlerts={securityAlerts} />
+        <main className="flex-1 p-4 md:p-8 overflow-auto">
+          <AdminContentSection section={activeSection} currentTheme={currentTheme} darkMode={darkMode} onLogout={onLogout} securityAlerts={securityAlerts} role={role} />
         </main>
       </div>
       {liveAlert && (
@@ -1691,7 +2253,7 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange }) => {
 };
 
 // Content sections based on RIT reference images
-const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securityAlerts = [] }) => {
+const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securityAlerts = [], role = 'admin' }) => {
   const [swotRunning, setSwotRunning] = useState(false);
   const [swotMessage, setSwotMessage] = useState(null);
   const [swotFile, setSwotFile] = useState(null);
@@ -1706,15 +2268,43 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
   const [isPredicting, setIsPredicting] = useState(false);
   const [securityConfig, setSecurityConfig] = useState(IMS_SECURITY_V2);
   const [securityConfigLoading, setSecurityConfigLoading] = useState(false);
+  const [routeQuery, setRouteQuery] = useState('');
+  const [userRecords, setUserRecords] = useState(() => {
+    const stored = localStorage.getItem('ims_users');
+    return stored ? JSON.parse(stored) : [
+      { id: 1, name: 'Dr. Kavitha', role: 'HOD', dept: 'CSE', email: 'hod.cse@rit.edu' },
+      { id: 2, name: 'Mr. Aravind', role: 'Teacher', dept: 'CSE', email: 'teacher.cse@rit.edu' },
+    ];
+  });
+  const [newUser, setNewUser] = useState({ name: '', role: 'Teacher', dept: 'CSE', email: '' });
+  const [auditLogs, setAuditLogs] = useState(() => JSON.parse(localStorage.getItem('ims_audit_logs') || '[]'));
+  const [attendanceLockHours, setAttendanceLockHours] = useState(() => localStorage.getItem('attendance_lock_hours') || '24');
+  const [hodSearch, setHodSearch] = useState('');
   
   const API_BASE = 'http://127.0.0.1:5001';
+  const adminToken = localStorage.getItem('ADMIN_API_TOKEN') || '';
+  const adminHeaders = adminToken ? { 'X-Admin-Token': adminToken } : {};
+  const adminFetch = (url, options = {}) => {
+    const mergedHeaders = { ...(options.headers || {}), ...adminHeaders };
+    return fetch(url, { ...options, headers: mergedHeaders });
+  };
+  const canEditUsers = role === 'admin';
+  const isReadOnlyDataRole = role === 'admin';
+
+  useEffect(() => {
+    localStorage.setItem('ims_users', JSON.stringify(userRecords));
+  }, [userRecords]);
+
+  useEffect(() => {
+    localStorage.setItem('attendance_lock_hours', String(attendanceLockHours));
+  }, [attendanceLockHours]);
 
   useEffect(() => {
     let cancelled = false;
     const loadSecurityConfig = async () => {
       setSecurityConfigLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/api/security/ims-v2`);
+        const res = await adminFetch(`${API_BASE}/api/security/ims-v2`);
         const data = await res.json().catch(() => null);
         if (!cancelled && res.ok && data?.ims_security_v2) {
           setSecurityConfig(data.ims_security_v2);
@@ -1734,7 +2324,7 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
     setIsPredicting(true);
     setPredictResult(null);
     try {
-      const res = await fetch(`${API_BASE}/api/swot/predict`, {
+      const res = await adminFetch(`${API_BASE}/api/swot/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: predictEmail, courseId: predictCourseId })
@@ -1759,18 +2349,18 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
       const formData = new FormData();
       const useFile = !actuallyForceDemo && swotFile;
       if (useFile) formData.append('file', swotFile);
-      const res = await fetch(`${API_BASE}/api/swot/run`, {
+      const res = await adminFetch(`${API_BASE}/api/swot/run`, {
         method: 'POST',
         body: useFile ? formData : JSON.stringify({ useDefault: true }),
-        headers: useFile ? {} : { 'Content-Type': 'application/json' },
+        headers: useFile ? adminHeaders : { 'Content-Type': 'application/json', ...adminHeaders },
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         setSwotMessage({ type: 'success', text: `Analysis complete. Results available for ${data.studentCount || 0} students.` });
         // Auto-fetch dashboard and student list
         const [dashRes, studRes] = await Promise.all([
-          fetch(`${API_BASE}/api/swot/class-dashboard`).then(r => r.json()).catch(() => null),
-          fetch(`${API_BASE}/api/swot/all-students`).then(r => r.json()).catch(() => null),
+          adminFetch(`${API_BASE}/api/swot/class-dashboard`).then(r => r.json()).catch(() => null),
+          adminFetch(`${API_BASE}/api/swot/all-students`).then(r => r.json()).catch(() => null),
         ]);
         if (dashRes && !dashRes.error) setClassDashboard(dashRes);
         if (studRes && !studRes.error) setAllStudents(studRes);
@@ -1787,13 +2377,207 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
     setSelectedStudent(email);
     setStudentDetailLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/swot/result?email=${encodeURIComponent(email)}`);
+      const res = await adminFetch(`${API_BASE}/api/swot/result?email=${encodeURIComponent(email)}`);
       const data = await res.json().catch(() => null);
       if (res.ok && data) setStudentDetail(data);
       else setStudentDetail(null);
     } catch { setStudentDetail(null); }
     setStudentDetailLoading(false);
   };
+
+  const addUserRecord = () => {
+    if (!canEditUsers || !newUser.name || !newUser.email) return;
+    setUserRecords((prev) => [{ id: Date.now(), ...newUser }, ...prev]);
+    pushAuditLog({ actor: 'admin', type: 'user_role_write', message: `Added ${newUser.role}: ${newUser.name}` });
+    setAuditLogs(JSON.parse(localStorage.getItem('ims_audit_logs') || '[]'));
+    setNewUser({ name: '', role: 'Teacher', dept: 'CSE', email: '' });
+  };
+
+  const removeUserRecord = (id) => {
+    if (!canEditUsers) return;
+    setUserRecords((prev) => prev.filter((u) => u.id !== id));
+    pushAuditLog({ actor: 'admin', type: 'user_role_write', message: `Removed user id ${id}` });
+    setAuditLogs(JSON.parse(localStorage.getItem('ims_audit_logs') || '[]'));
+  };
+
+  const riskStudents = ATTENDANCE_DATA.filter((row) => isAttendanceRisk(row.percentage));
+  const sectionBuckets = ATTENDANCE_DATA.reduce((acc, row) => {
+    const key = row.section;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(row);
+    return acc;
+  }, {});
+  const sectionTrendData = Object.entries(sectionBuckets).map(([sectionName, rows]) => ({
+    sectionName,
+    avgAttendance: Math.round((rows.reduce((a, b) => a + b.percentage, 0) / rows.length) * 10) / 10,
+    riskCount: rows.filter((r) => isAttendanceRisk(r.percentage)).length,
+  }));
+  const filteredRiskStudents = riskStudents.filter((row) => {
+    const q = hodSearch.trim().toLowerCase();
+    return !q || row.regNo.toLowerCase().includes(q) || row.fname.toLowerCase().includes(q);
+  });
+
+  if (section === 'hodDashboard') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>HOD Dashboard</h1>
+            <p className={`${currentTheme.textSecondary} text-sm mt-1`}>Department attendance control center with at-risk analytics.</p>
+          </div>
+          <div className={`px-3 py-2 rounded-xl ${currentTheme.card} ${currentTheme.neoBorder} text-xs ${currentTheme.textPrimary}`}>Department: CSE</div>
+        </div>
+        <div className="grid md:grid-cols-4 gap-4">
+          <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Total Students</p><p className={`${currentTheme.textPrimary} text-xl font-bold`}>{ATTENDANCE_DATA.length}</p></div>
+          <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>At Risk (&lt;75%)</p><p className="text-red-500 text-xl font-bold">{riskStudents.length}</p></div>
+          <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Sections</p><p className={`${currentTheme.textPrimary} text-xl font-bold`}>{Object.keys(sectionBuckets).length}</p></div>
+          <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Avg Attendance</p><p className={`${currentTheme.textPrimary} text-xl font-bold`}>{Math.round((ATTENDANCE_DATA.reduce((a, b) => a + b.percentage, 0) / ATTENDANCE_DATA.length) * 10) / 10}%</p></div>
+        </div>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-3`}>Staff Timetable Completion</h3>
+            <div className="space-y-2">
+              {['PANDIARAJAN T.', 'SOWMYA S', 'ARAVINDH S', 'MURUGAN P'].map((name, i) => (
+                <div key={name} className={`p-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} flex justify-between`}>
+                  <span className={currentTheme.textPrimary}>{name}</span>
+                  <span className={`text-xs font-semibold ${i % 2 === 0 ? 'text-emerald-500' : 'text-amber-500'}`}>{i % 2 === 0 ? 'Completed' : 'Pending'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+            <h3 className={`${currentTheme.textPrimary} font-bold mb-3`}>Attendance Trend by Section</h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={sectionTrendData}>
+                <XAxis dataKey="sectionName" tick={{ fontSize: 10 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="avgAttendance" fill="#3b82f6" name="Avg %" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className={`${currentTheme.textPrimary} font-bold`}>Students at Risk (&lt;75%)</h3>
+            <span className="text-red-500 text-xs font-semibold">{filteredRiskStudents.length} students</span>
+          </div>
+          <div className="mb-3">
+            <input
+              value={hodSearch}
+              onChange={(e) => setHodSearch(e.target.value)}
+              placeholder="Search register no or staff id/name..."
+              className={`w-full sm:w-80 px-3 py-2 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary} text-sm`}
+            />
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[680px]">
+              <thead><tr className={`border-b ${currentTheme.border}`}><th className="p-3 text-left">Reg No</th><th className="p-3 text-left">Student</th><th className="p-3 text-left">Staff</th><th className="p-3 text-left">Section</th><th className="p-3 text-left">Attendance</th></tr></thead>
+              <tbody>
+                {filteredRiskStudents.map((s) => (
+                  <tr key={s.id} className={`border-b ${currentTheme.border}`}>
+                    <td className={`p-3 ${currentTheme.textSecondary}`}>{s.regNo}</td>
+                    <td className={`p-3 ${currentTheme.textPrimary}`}>{s.cname}</td>
+                    <td className={`p-3 ${currentTheme.textSecondary}`}>{s.fname}</td>
+                    <td className={`p-3 ${currentTheme.textSecondary}`}>{s.section}</td>
+                    <td className="p-3"><span className="px-2 py-1 rounded-lg bg-red-500/15 text-red-500 text-xs font-semibold">{s.percentage}%</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === 'adminDashboard') {
+    const presentToday = ATTENDANCE_DATA.reduce((acc, row) => acc + row.attended, 0);
+    const totalToday = ATTENDANCE_DATA.reduce((acc, row) => acc + row.total, 0);
+    const presentPercent = calculateAttendancePercentage(presentToday, totalToday);
+    return (
+      <div className="space-y-6">
+        <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Admin Dashboard</h1>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Total Students</p><p className={`${currentTheme.textPrimary} text-2xl font-bold`}>{ATTENDANCE_DATA.length}</p></div>
+          <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Present Today (Aggregate)</p><p className={`${currentTheme.textPrimary} text-2xl font-bold`}>{presentPercent}%</p></div>
+          <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Data Access</p><p className={`${currentTheme.textPrimary} text-sm font-semibold mt-2`}>Read-only for attendance and marks</p></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === 'userMgmt') {
+    return (
+      <div className="space-y-6">
+        <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>User Management</h1>
+        <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+          <p className={`${currentTheme.textSecondary} text-sm mb-4`}>Admin can manage role assignments for HOD and teachers.</p>
+          <div className="grid md:grid-cols-4 gap-3 mb-4">
+            <input value={newUser.name} onChange={(e) => setNewUser((p) => ({ ...p, name: e.target.value }))} placeholder="Name" className={`px-3 py-2.5 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+            <select value={newUser.role} onChange={(e) => setNewUser((p) => ({ ...p, role: e.target.value }))} className={`px-3 py-2.5 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`}><option>Teacher</option><option>HOD</option></select>
+            <input value={newUser.dept} onChange={(e) => setNewUser((p) => ({ ...p, dept: e.target.value }))} placeholder="Department" className={`px-3 py-2.5 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+            <input value={newUser.email} onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))} placeholder="Email" className={`px-3 py-2.5 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+          </div>
+          <button onClick={addUserRecord} disabled={!canEditUsers} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-60">Add User</button>
+        </div>
+        <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className={`border-b ${currentTheme.border}`}><th className="p-3 text-left">Name</th><th className="p-3 text-left">Role</th><th className="p-3 text-left">Dept</th><th className="p-3 text-left">Email</th><th className="p-3 text-left">Action</th></tr></thead>
+              <tbody>
+                {userRecords.map((u) => (
+                  <tr key={u.id} className={`border-b ${currentTheme.border}`}>
+                    <td className={`p-3 ${currentTheme.textPrimary}`}>{u.name}</td>
+                    <td className="p-3"><span className="px-2 py-1 rounded-lg bg-blue-500/15 text-blue-500 text-xs font-semibold">{u.role}</span></td>
+                    <td className={`p-3 ${currentTheme.textSecondary}`}>{u.dept}</td>
+                    <td className={`p-3 ${currentTheme.textSecondary}`}>{u.email}</td>
+                    <td className="p-3"><button disabled={!canEditUsers} onClick={() => removeUserRecord(u.id)} className="text-red-500 text-xs font-semibold disabled:opacity-50">Remove</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === 'systemControl') {
+    return (
+      <div className="space-y-6">
+        <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>System Control</h1>
+        <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className={`p-4 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+              <p className={`${currentTheme.textPrimary} font-semibold mb-2`}>Attendance Edit Window Lock</p>
+              <p className={`${currentTheme.textSecondary} text-xs mb-2`}>Lock attendance edits after configured hours.</p>
+              <input value={attendanceLockHours} onChange={(e) => setAttendanceLockHours(e.target.value)} className={`w-full px-3 py-2 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+            </div>
+            <div className={`p-4 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+              <p className={`${currentTheme.textPrimary} font-semibold mb-2`}>Database Utility</p>
+              <div className="flex gap-2">
+                <button onClick={() => pushAuditLog({ actor: 'admin', type: 'backup', message: 'Manual backup triggered' })} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold">Backup Now</button>
+                <button onClick={() => pushAuditLog({ actor: 'admin', type: 'bulk_upload', message: 'Bulk CSV upload simulated' })} className="px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold">Bulk Upload CSV</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className={`${currentTheme.card} rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+          <h3 className={`${currentTheme.textPrimary} font-bold mb-3`}>System Audit Feed</h3>
+          <div className="space-y-2">
+            {auditLogs.slice(0, 12).map((log) => (
+              <div key={log.id} className={`p-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+                <p className={`${currentTheme.textPrimary} text-sm font-medium`}>{log.message || log.type}</p>
+                <p className={`${currentTheme.textSecondary} text-xs mt-1`}>{log.actor || 'system'} · {log.timestamp}</p>
+              </div>
+            ))}
+            {auditLogs.length === 0 && <p className={`${currentTheme.textSecondary} text-sm`}>No audit entries yet.</p>}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (section === 'password') {
     return (
@@ -2100,6 +2884,14 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
           <h1 className={`${currentTheme.textPrimary} text-2xl font-bold`}>SWOT & ML Performance Analysis</h1>
         </div>
         <p className={`${currentTheme.textSecondary} text-sm`}>Run the ML model on performance data. Click Analyse to auto-run the ML scripts and view class dashboard with individual student drill-down.</p>
+        <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-4 border ${currentTheme.neoBorder}`}>
+          <p className={`${currentTheme.textPrimary} text-sm font-semibold mb-2`}>Recommended flow</p>
+          <ol className={`${currentTheme.textSecondary} text-xs space-y-1 list-decimal pl-4`}>
+            <li>Upload CSV (or use demo data) and run analysis.</li>
+            <li>Review class dashboard and at-risk list.</li>
+            <li>Open student drill-down and export report PDFs.</li>
+          </ol>
+        </div>
 
         {/* Run Analysis Card */}
         <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-6 border ${currentTheme.neoBorder}`}>
@@ -2109,13 +2901,14 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
               <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary} block mb-2`}>Upload CSV (optional)</label>
               <input type="file" accept=".csv" onChange={(e) => setSwotFile(e.target.files?.[0] || null)} className={`text-sm ${currentTheme.textPrimary}`} />
             </div>
-            <button id="analyse-btn" onClick={() => runSwot(false)} disabled={swotRunning} className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold disabled:opacity-60 flex items-center gap-2 shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:-translate-y-0.5 transition-all">
+            <button id="analyse-btn" onClick={() => runSwot(false)} disabled={swotRunning || isReadOnlyDataRole} className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold disabled:opacity-60 flex items-center gap-2 shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:-translate-y-0.5 transition-all">
               <Activity size={18} className={swotRunning ? 'animate-spin' : ''} /> {swotRunning ? 'Running ML Scripts...' : 'Analyse'}
             </button>
-            <button onClick={() => { setSwotFile(null); runSwot(true); }} disabled={swotRunning} className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold disabled:opacity-60 flex items-center gap-2 transition-colors">
+            <button onClick={() => { setSwotFile(null); runSwot(true); }} disabled={swotRunning || isReadOnlyDataRole} className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold disabled:opacity-60 flex items-center gap-2 transition-colors">
               <Activity size={18} /> Use Demo Data
             </button>
           </div>
+          {isReadOnlyDataRole && <p className="text-xs text-amber-500 mt-3">Admin has read-only access for attendance analytics. User role management remains writable.</p>}
           {swotMessage && (
             <div className={`mt-4 p-3 rounded-xl text-sm font-medium ${swotMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
               {swotMessage.type === 'success' ? <CheckCircle2 size={16} className="inline mr-2" /> : <XCircle size={16} className="inline mr-2" />}
@@ -2137,7 +2930,7 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
               <label className={`text-xs font-bold uppercase ${currentTheme.textSecondary} block mb-2`}>Course ID</label>
               <input value={predictCourseId} onChange={e => setPredictCourseId(e.target.value)} type="text" placeholder="e.g. AL23432" className={`w-full py-2.5 px-4 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary} outline-none focus:ring-2 focus:ring-blue-500/50`} />
             </div>
-            <button onClick={triggerMechanics} disabled={isPredicting} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold disabled:opacity-60 flex items-center gap-2 shadow-md transition-all whitespace-nowrap">
+            <button onClick={triggerMechanics} disabled={isPredicting || isReadOnlyDataRole} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold disabled:opacity-60 flex items-center gap-2 shadow-md transition-all whitespace-nowrap">
               <Zap size={18} className={isPredicting ? "animate-pulse" : ""} /> {isPredicting ? 'Computing...' : 'Trigger Predict'}
             </button>
           </div>
@@ -2396,6 +3189,101 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
     );
   }
 
+  if (section === 'directory') {
+    const busRoutes = [
+      { no: 'R01', name: 'Ennore', start: '5.50 am' }, { no: 'R01A', name: 'Tondiarpet', start: '6.17 am' },
+      { no: 'R01B', name: 'Kasimedu', start: '6.15 am' }, { no: 'R02', name: 'Triplicane', start: '6.20 am' },
+      { no: 'R03', name: 'Choolai', start: '6.20 am' }, { no: 'R03A', name: 'Collector Nagar', start: '6.50 am' },
+      { no: 'R03B', name: 'Water Tank', start: '6.40 am' }, { no: 'R04', name: 'East Mogappair', start: '6.30 am' },
+      { no: 'R05', name: 'CIT Nagar', start: '6.10 am' }, { no: 'R05A', name: 'Loyola College', start: '6.40 am' },
+      { no: 'R06', name: 'Chinmayanagar', start: '6.10 am' }, { no: 'R07', name: 'Santhome', start: '6.10 am' },
+      { no: 'R08', name: 'Kovilambakkam', start: '6.10 am' }, { no: 'R08A', name: 'Adambakkam', start: '6.30 am' },
+      { no: 'R09', name: 'MKB Nagar', start: '6.00 am' }, { no: 'R09A', name: 'Perambur', start: '6.30 am' },
+      { no: 'R10', name: 'Thachoor', start: '5.50 am' }, { no: 'R11', name: 'Chengalpattu', start: '6.00 am' },
+      { no: 'R11A', name: 'Guduvanchery', start: '6.30 am' }, { no: 'R12', name: 'Minjur', start: '5.45 am' },
+      { no: 'R13', name: 'Vyasarpadi', start: '6.10 am' }, { no: 'R13A', name: 'ICF', start: '6.45 am' },
+      { no: 'R14', name: 'Thiruvallur', start: '6.25 am' }, { no: 'R14A', name: 'Kakkalur', start: '6.55 am' },
+      { no: 'R15', name: 'Kancheepuram', start: '6.00 am' }, { no: 'R15A', name: 'Orikkai', start: '6.15 am' },
+      { no: 'R16', name: 'Neelangkarai', start: '6.10 am' }, { no: 'R16A', name: 'Guindy', start: '6.45 am' },
+      { no: 'R16B', name: 'Sholinganallur', start: '6.10 am' }, { no: 'R17', name: 'Valluvarkottam', start: '6.15 am' },
+      { no: 'R17A', name: 'Valasaravakkam', start: '6.45 am' }, { no: 'R18', name: 'Pallikaranai', start: '6.15 am' },
+      { no: 'R18A', name: 'Sembakkam', start: '6.25 am' }, { no: 'R18B', name: 'Kelambakkam', start: '6.00 am' },
+      { no: 'R19', name: 'Poombukar', start: '6.10 am' }, { no: 'R19A', name: 'Vinayagapuram', start: '6.45 am' },
+      { no: 'R20', name: 'Vepampattu', start: '6.30 am' }, { no: 'R21', name: 'Ayyapakkam', start: '6.15 am' },
+      { no: 'R22', name: 'Thiruthani', start: '5.55 am' }, { no: 'R22A', name: 'SR Gate', start: '6.30 am' },
+      { no: 'R23', name: 'K4 Police Station', start: '6.35 am' }, { no: 'R24', name: 'Arcot', start: '5.25 am' },
+      { no: 'R25', name: 'Kallikuppam', start: '6.45 am' }, { no: 'R25A', name: 'Pudur', start: '6.45 am' },
+      { no: 'R26', name: 'Andarkuppam', start: '6.35 am' }, { no: 'R27', name: 'Avadi', start: '6.25 am' },
+      { no: 'R27A', name: 'Kollumedu', start: '6.30 am' }, { no: 'R28', name: 'Agaram', start: '6.20 am' },
+      { no: 'R29', name: 'Velachery', start: '6.10 am' }, { no: 'R29A', name: 'Pammal', start: '6.35 am' },
+      { no: 'R29B', name: 'Sivanthangal', start: '7.05 am' },
+    ];
+    const filteredRoutes = busRoutes.filter((r) => {
+      const q = routeQuery.trim().toLowerCase();
+      return !q || r.no.toLowerCase().includes(q) || r.name.toLowerCase().includes(q);
+    });
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className={`${currentTheme.textPrimary} text-2xl font-bold flex items-center gap-2`}><MapPin size={22} /> Transport Directory</h1>
+            <p className={`${currentTheme.textSecondary} text-sm mt-1`}>Updated bus routes and pickup start timings.</p>
+          </div>
+          <a href="https://www.rittransport.com/js/51jan26.php" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold">
+            Source Link
+          </a>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Total Routes</p><p className={`${currentTheme.textPrimary} text-xl font-bold`}>{busRoutes.length}</p></div>
+          <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Earliest Start</p><p className={`${currentTheme.textPrimary} text-xl font-bold`}>5.25 am</p></div>
+          <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Latest Start</p><p className={`${currentTheme.textPrimary} text-xl font-bold`}>7.05 am</p></div>
+          <div className={`${currentTheme.card} rounded-2xl p-4 border ${currentTheme.neoBorder}`}><p className={`${currentTheme.textSecondary} text-xs`}>Visible</p><p className={`${currentTheme.textPrimary} text-xl font-bold`}>{filteredRoutes.length}</p></div>
+        </div>
+
+        <div className={`${currentTheme.card} backdrop-blur-2xl rounded-2xl p-5 border ${currentTheme.neoBorder}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="relative w-full sm:w-80">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${currentTheme.textSecondary} w-4 h-4`} />
+              <input
+                value={routeQuery}
+                onChange={(e) => setRouteQuery(e.target.value)}
+                placeholder="Search route no or area..."
+                className={`w-full pl-9 pr-3 py-2.5 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary} text-sm`}
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead>
+                <tr className={`border-b ${currentTheme.border}`}>
+                  <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>S.No</th>
+                  <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Route No</th>
+                  <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Route Name</th>
+                  <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Starting Time</th>
+                  <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Boarding</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRoutes.map((route, idx) => (
+                  <tr key={route.no} className={`border-b ${currentTheme.border} hover:bg-black/[0.03] dark:hover:bg-white/[0.03]`}>
+                    <td className={`p-3 ${currentTheme.textSecondary}`}>{idx + 1}</td>
+                    <td className="p-3"><span className="px-2 py-1 rounded-lg bg-blue-500/15 text-blue-500 text-xs font-semibold">{route.no}</span></td>
+                    <td className={`p-3 ${currentTheme.textPrimary} font-medium`}>{route.name}</td>
+                    <td className={`p-3 ${currentTheme.textPrimary}`}>{route.start}</td>
+                    <td className="p-3"><span className={`${currentTheme.textSecondary} text-xs`}>Boarding points available</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Security architecture and immutable audit flow
   if (section === 'audit') {
     const chain = securityConfig?.blockchain_layer || IMS_SECURITY_V2.blockchain_layer;
@@ -2428,7 +3316,10 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
                 <div key={alert.id} className="rounded-xl border border-red-500/20 bg-red-500/5 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-red-400">{alert.type}</p>
-                    <p className="text-[10px] text-red-300/80">{alert.timestamp}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 font-semibold uppercase">{alert.severity || 'high'}</span>
+                      <p className="text-[10px] text-red-300/80">{alert.timestamp}</p>
+                    </div>
                   </div>
                   <p className={`${currentTheme.textPrimary} text-sm mt-1`}>{alert.message}</p>
                   <p className={`text-[11px] mt-1 ${currentTheme.textSecondary}`}>{alert.method} {alert.path} · {alert.ip}</p>
@@ -2541,7 +3432,7 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [authRole, setAuthRole] = useState('student');
   const [studentEmail, setStudentEmail] = useState(null);
   const [themeMode, setThemeMode] = useState('system');
   const [systemPrefersDark, setSystemPrefersDark] = useState(() =>
@@ -2607,11 +3498,17 @@ const App = () => {
     { icon: LayoutDashboard, label: 'Dashboard' },
     { icon: Activity, label: 'SWOT Analysis' },
     { icon: Calendar, label: 'My Timetable' },
+    { icon: BookOpen, label: 'My Subject Registration' },
     { icon: ClipboardList, label: 'Leave / OD' },
     { icon: UserCheck, label: 'Attendance' },
     { icon: Zap, label: 'CAT Mark' },
     { icon: Clock, label: 'LAB Mark' },
+    { icon: BarChart3, label: 'Grade Book' },
+    { icon: GraduationCap, label: 'CGPA Calculator' },
+    { icon: MessageSquare, label: 'Messages' },
+    { icon: KeyRound, label: 'Change Password' },
     { icon: Wallet, label: 'Academic Fee' },
+    { icon: Settings, label: 'Profile & Settings' },
   ];
 
   const todayIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
@@ -2632,30 +3529,41 @@ const App = () => {
     { label: 'Avg Attendance', value: '92%', icon: UserCheck, colorClass: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', shadowClass: 'shadow-indigo-500/20', darkGlow: 'bg-indigo-600', onClick: () => setActiveTab('Attendance') },
     { label: 'Total Leaves', value: '2', icon: Clock, colorClass: 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400', shadowClass: 'shadow-orange-500/20', darkGlow: 'bg-orange-600', onClick: () => setActiveTab('Leave / OD') },
   ];
+  const quickActions = [
+    { label: 'View Timetable', hint: 'Today + week plan', tab: 'My Timetable' },
+    { label: 'Check Attendance', hint: 'Low-risk subjects first', tab: 'Attendance' },
+    { label: 'Open SWOT Report', hint: 'Performance insights', tab: 'SWOT Analysis' },
+  ];
+  const announcementList = [
+    { title: 'Placement Drive: Google Cloud', info: 'Pre-placement talk at Main Auditorium', time: 'Today, 10:00 AM' },
+    { title: 'Internal Assessment III Postponed', info: 'Updated schedule published', time: 'Yesterday' },
+    { title: 'Hackathon 2026 Registrations', info: 'Team registration closes Jan 26', time: 'Jan 20' },
+  ];
 
   if (!isAuthenticated) {
     return (
       <SignInPage
-        onSignIn={({ isAdmin: admin, email }) => {
+        onSignIn={({ role, email }) => {
           setIsAuthenticated(true);
-          setIsAdmin(!!admin);
+          setAuthRole(role || 'student');
           setStudentEmail(email || null);
         }}
       />
     );
   }
 
-  if (isAdmin) {
+  if (authRole === 'admin' || authRole === 'hod' || authRole === 'teacher') {
     return (
       <div className={`theme-smooth min-h-screen ${darkMode ? 'dark bg-[#000000]' : 'bg-slate-100/80'}`}>
         <AdminPanel
           onLogout={() => {
             setIsAuthenticated(false);
-            setIsAdmin(false);
+            setAuthRole('student');
           }}
           darkMode={darkMode}
           themeMode={themeMode}
           onThemeModeChange={handleThemeModeChange}
+          role={authRole}
         />
       </div>
     );
@@ -2778,124 +3686,76 @@ const App = () => {
         {/* Dashboard Content Container */}
         {activeTab === 'Dashboard' && (
           <div className="p-4 md:p-10 md:pt-4 max-w-7xl mx-auto w-full animate-fade-in">
-
-            {/* Elegant Hero Section */}
-            <div className={`${currentTheme.heroGradient} rounded-[24px] md:rounded-[32px] p-6 md:p-10 mb-8 md:mb-10`}>
-              {darkMode && (
-                <>
-                  <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/20 rounded-full blur-[80px]"></div>
-                  <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-500/20 rounded-full blur-[80px]"></div>
-                </>
-              )}
-              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className={`${currentTheme.heroGradient} rounded-[24px] md:rounded-[32px] p-6 md:p-8 mb-8`}>
+              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight mb-2">Good morning, Arvind.</h1>
-                  <p className="text-blue-100/80 text-xs md:text-base mt-2 max-w-lg font-medium">
-                    Your academic standing is excellent. You have 2 classes today.
-                  </p>
+                  <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">Good morning, Arvind.</h1>
+                  <p className="text-blue-100/80 text-sm mt-1">Today focus: 2 classes, no low-attendance critical alerts.</p>
                 </div>
-
-                <div className="flex gap-3">
-                  <button className={`px-6 py-3 rounded-2xl text-sm font-bold shadow-lg transition-transform hover:scale-105 active:scale-95 ${darkMode ? 'bg-white text-black' : 'bg-white text-blue-600'}`}>
-                    View Schedule
-                  </button>
-                </div>
+                <button
+                  onClick={() => setActiveTab('My Timetable')}
+                  className={`px-5 py-2.5 rounded-2xl text-sm font-bold ${darkMode ? 'bg-white text-black' : 'bg-white text-blue-600'}`}
+                >
+                  Open Timetable
+                </button>
               </div>
             </div>
 
-            {/* KPI Stats Row (Apple Style separated cards) */}
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {stats.map((stat, idx) => (
                 <StatCard key={idx} {...stat} theme={currentTheme} darkMode={darkMode} />
               ))}
             </div>
 
-            {/* Main Content Sections */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-10">
-
-              {/* Announcements - Clean List Style */}
-              <div className={`xl:col-span-2 ${currentTheme.card} rounded-[24px] md:rounded-[32px] p-5 md:p-8 relative overflow-hidden`}>
+            <div className="grid lg:grid-cols-3 gap-6 mb-8">
+              <div className={`lg:col-span-2 ${currentTheme.card} rounded-[24px] p-6 relative overflow-hidden`}>
                 <div className={`absolute inset-0 ${currentTheme.cardInner} opacity-50`}></div>
-
                 <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-8">
-                    <h3 className={`${currentTheme.textPrimary} font-bold text-xl tracking-tight`}>
-                      Announcements
-                    </h3>
-                    <button className={`text-sm font-semibold ${currentTheme.warmAccent} hover:underline`}>See All</button>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`${currentTheme.textPrimary} text-lg font-bold`}>Quick Actions</h3>
                   </div>
-
-                  <div className="space-y-1">
-                    {[
-                      { title: "Placement Drive: Google Cloud", info: "Pre-placement talk at Main Auditorium", time: "Today, 10:00 AM", isNew: true },
-                      { title: "Internal Assessment III Postponed", info: "Check the updated schedule in your portal", time: "Yesterday", isNew: false },
-                      { title: "Hackathon 2026 Registrations", info: "Last date to register your team is Jan 26", time: "Jan 20", isNew: false }
-                    ].map((item, i) => (
-                      <div key={i} className={`p-4 rounded-2xl flex items-center justify-between group hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors cursor-pointer`}>
-                        <div className="flex items-start gap-4">
-                          <div className={`w-2 h-2 mt-2 rounded-full ${item.isNew ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'bg-transparent'}`}></div>
-                          <div>
-                            <h4 className={`${currentTheme.textPrimary} font-semibold text-base mb-0.5 group-hover:text-blue-500 transition-colors`}>{item.title}</h4>
-                            <span className={`${currentTheme.textSecondary} text-sm`}>{item.info}</span>
-                          </div>
-                        </div>
-                        <span className={`${currentTheme.textSecondary} text-xs font-medium whitespace-nowrap`}>{item.time}</span>
-                      </div>
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    {quickActions.map((action) => (
+                      <button
+                        key={action.label}
+                        onClick={() => setActiveTab(action.tab)}
+                        className={`text-left p-4 rounded-2xl ${currentTheme.bg} ${currentTheme.neoBorder} hover:bg-black/5 dark:hover:bg-white/10 transition-colors`}
+                      >
+                        <p className={`${currentTheme.textPrimary} text-sm font-semibold`}>{action.label}</p>
+                        <p className={`${currentTheme.textSecondary} text-xs mt-1`}>{action.hint}</p>
+                      </button>
                     ))}
                   </div>
                 </div>
               </div>
-
-              {/* Quick Agenda / Mini Calendar */}
-              <div className={`${currentTheme.card} rounded-[24px] md:rounded-[32px] p-5 md:p-8 flex flex-col relative overflow-hidden`}>
+              <div className={`${currentTheme.card} rounded-[24px] p-6 relative overflow-hidden`}>
                 <div className={`absolute inset-0 ${currentTheme.cardInner} opacity-50`}></div>
-
-                <div className="relative z-10 flex-1 flex flex-col">
-                  <div className="flex items-center justify-between mb-8">
-                    <h3 className={`${currentTheme.textPrimary} font-bold text-xl tracking-tight`}>
-                      Up Next
-                    </h3>
-                    <div className={`w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center ${currentTheme.textPrimary}`}>
-                      <span className="text-xs font-bold">28</span>
-                    </div>
+                <div className="relative z-10">
+                  <h3 className={`${currentTheme.textPrimary} text-lg font-bold mb-4`}>Next Class</h3>
+                  <div className="p-4 rounded-2xl bg-black/[0.03] dark:bg-white/[0.03]">
+                    <p className={`${currentTheme.textSecondary} text-xs uppercase font-bold`}>09:30 AM</p>
+                    <p className={`${currentTheme.textPrimary} text-sm font-semibold mt-1`}>Compiler Design</p>
+                    <p className={`${currentTheme.textSecondary} text-xs mt-1`}>Room 402</p>
                   </div>
+                </div>
+              </div>
+            </div>
 
-                  <div className="flex-1 flex flex-col gap-4">
-                    {/* Event item */}
-                    <div className="flex gap-4 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] !border-[1px] !border-solid !border-black/5 dark:border-white/5">
-                      <div className="flex flex-col items-center justify-center pr-4 border-r border-slate-200 dark:border-slate-800">
-                        <span className={`text-sm font-bold ${currentTheme.textPrimary}`}>09:30</span>
-                        <span className={`text-[10px] font-medium ${currentTheme.textSecondary}`}>AM</span>
-                      </div>
-                      <div>
-                        <h4 className={`font-semibold text-sm ${currentTheme.textPrimary}`}>Compiler Design</h4>
-                        <p className={`text-xs ${currentTheme.textSecondary} mt-1 flex items-center gap-1`}>
-                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Room 402
-                        </p>
-                      </div>
+            <div className={`${currentTheme.card} rounded-[24px] p-6 relative overflow-hidden`}>
+              <div className={`absolute inset-0 ${currentTheme.cardInner} opacity-50`}></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`${currentTheme.textPrimary} text-lg font-bold`}>Announcements</h3>
+                  <span className={`${currentTheme.textSecondary} text-xs`}>Latest 3 updates</span>
+                </div>
+                <div className="space-y-2">
+                  {announcementList.map((item) => (
+                    <div key={item.title} className={`p-4 rounded-2xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+                      <p className={`${currentTheme.textPrimary} text-sm font-semibold`}>{item.title}</p>
+                      <p className={`${currentTheme.textSecondary} text-xs mt-1`}>{item.info}</p>
+                      <p className={`${currentTheme.textSecondary} text-[11px] mt-1`}>{item.time}</p>
                     </div>
-
-                    {/* Event item */}
-                    <div className="flex gap-4 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] !border-[1px] !border-solid !border-black/5 dark:border-white/5">
-                      <div className="flex flex-col items-center justify-center pr-4 border-r border-slate-200 dark:border-slate-800">
-                        <span className={`text-sm font-bold ${currentTheme.textPrimary}`}>11:15</span>
-                        <span className={`text-[10px] font-medium ${currentTheme.textSecondary}`}>AM</span>
-                      </div>
-                      <div>
-                        <h4 className={`font-semibold text-sm ${currentTheme.textPrimary}`}>Machine Learning</h4>
-                        <p className={`text-xs ${currentTheme.textSecondary} mt-1 flex items-center gap-1`}>
-                          <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div> Lab 3
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setActiveTab('My Timetable')}
-                    className={`w-full py-3.5 mt-6 rounded-2xl bg-black/5 dark:bg-white/[0.05] ${currentTheme.textPrimary} text-sm font-semibold hover:bg-black/10 dark:hover:bg-white/10 transition-colors`}
-                  >
-                    Open Full Timetable
-                  </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -2995,6 +3855,11 @@ const App = () => {
           <TimetableContent currentTheme={currentTheme} darkMode={darkMode} />
         )}
 
+        {/* Subject Registration */}
+        {activeTab === 'My Subject Registration' && (
+          <SubjectRegistrationContent currentTheme={currentTheme} darkMode={darkMode} />
+        )}
+
         {/* Leave/OD Content Container */}
         {activeTab === 'Leave / OD' && (
           <LeaveODContent currentTheme={currentTheme} darkMode={darkMode} />
@@ -3003,6 +3868,26 @@ const App = () => {
         {/* Attendance Content Container */}
         {activeTab === 'Attendance' && (
           <AttendanceContent currentTheme={currentTheme} darkMode={darkMode} />
+        )}
+
+        {/* Grade Book */}
+        {activeTab === 'Grade Book' && (
+          <GradeBookContent currentTheme={currentTheme} darkMode={darkMode} />
+        )}
+
+        {/* Messages */}
+        {activeTab === 'Messages' && (
+          <MessagesContent currentTheme={currentTheme} darkMode={darkMode} />
+        )}
+
+        {/* CGPA Calculator */}
+        {activeTab === 'CGPA Calculator' && (
+          <CgpaCalculatorContent currentTheme={currentTheme} darkMode={darkMode} />
+        )}
+
+        {/* Change Password */}
+        {activeTab === 'Change Password' && (
+          <StudentChangePasswordContent currentTheme={currentTheme} darkMode={darkMode} />
         )}
 
         {/* CAT Mark Content Container */}
@@ -3018,6 +3903,55 @@ const App = () => {
         {/* SWOT Analysis Content Container */}
         {activeTab === 'SWOT Analysis' && (
           <SwotAnalysisContent currentTheme={currentTheme} darkMode={darkMode} studentEmail={studentEmail} />
+        )}
+
+        {/* Profile & Settings */}
+        {activeTab === 'Profile & Settings' && (
+          <div className="p-4 md:p-10 md:pt-4 max-w-5xl mx-auto w-full animate-fade-in space-y-6">
+            <div className={`${currentTheme.card} rounded-[24px] p-6 md:p-8 relative overflow-hidden`}>
+              <div className={`absolute inset-0 ${currentTheme.cardInner} opacity-50`}></div>
+              <div className="relative z-10 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+                <div>
+                  <h2 className={`${currentTheme.textPrimary} text-2xl font-bold`}>Profile & Settings</h2>
+                  <p className={`${currentTheme.textSecondary} text-sm mt-1`}>Manage account basics and preferences.</p>
+                </div>
+                <div className={`px-3 py-2 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder}`}>
+                  <p className={`${currentTheme.textPrimary} text-sm font-semibold`}>{studentEmail || 'student@ritchennai.edu.in'}</p>
+                </div>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className={`${currentTheme.card} rounded-[24px] p-6 relative overflow-hidden`}>
+                <div className={`absolute inset-0 ${currentTheme.cardInner} opacity-50`}></div>
+                <div className="relative z-10 space-y-4">
+                  <h3 className={`${currentTheme.textPrimary} font-bold`}>Account</h3>
+                  <div>
+                    <label className={`${currentTheme.textSecondary} text-xs font-bold uppercase`}>Display Name</label>
+                    <input defaultValue="Arvind N." className={`mt-1 w-full px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+                  </div>
+                  <div>
+                    <label className={`${currentTheme.textSecondary} text-xs font-bold uppercase`}>Department</label>
+                    <input defaultValue="CSE" className={`mt-1 w-full px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+                  </div>
+                </div>
+              </div>
+              <div className={`${currentTheme.card} rounded-[24px] p-6 relative overflow-hidden`}>
+                <div className={`absolute inset-0 ${currentTheme.cardInner} opacity-50`}></div>
+                <div className="relative z-10 space-y-4">
+                  <h3 className={`${currentTheme.textPrimary} font-bold`}>Preferences</h3>
+                  <label className="flex items-center justify-between p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.03]">
+                    <span className={`${currentTheme.textPrimary} text-sm`}>Email notifications</span>
+                    <input type="checkbox" defaultChecked />
+                  </label>
+                  <label className="flex items-center justify-between p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.03]">
+                    <span className={`${currentTheme.textPrimary} text-sm`}>Show attendance alerts</span>
+                    <input type="checkbox" defaultChecked />
+                  </label>
+                  <button className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold">Save Preferences</button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </main>
 

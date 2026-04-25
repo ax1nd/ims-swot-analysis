@@ -1,15 +1,83 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, SafeAreaView, StatusBar, Platform, View, Text, ActivityIndicator, useColorScheme } from 'react-native';
+import { StyleSheet, SafeAreaView, StatusBar, Platform, View, Text, ActivityIndicator, useColorScheme, NativeModules } from 'react-native';
 import { WebView } from 'react-native-webview';
+import Constants from 'expo-constants';
 
 export default function App() {
-  // Directly load the running Vite dev server IP
-  const url = 'http://10.10.29.86:5173';
-  const apiBase = 'http://10.10.29.86:5001';
+  /**
+   * Host where Vite (5173) and ml-api (5001) run — must be reachable from the device.
+   * Physical phones cannot use 10.0.2.2 (emulator-only) or 127.0.0.1 (device loopback).
+   */
+  const normalizeDevMachineHost = (value) => {
+    if (!value || typeof value !== 'string') return null;
+    let s = value.trim();
+    if (!s) return null;
+    if (s.includes('://')) {
+      try {
+        s = new URL(s).hostname;
+      } catch {
+        return null;
+      }
+    } else {
+      const idx = s.lastIndexOf(':');
+      if (idx > 0) {
+        const tail = s.slice(idx + 1);
+        if (/^\d+$/.test(tail)) s = s.slice(0, idx);
+      }
+    }
+    if (s === 'localhost' || s === '127.0.0.1') return null;
+    // Tunnel URL is not your LAN machine for arbitrary ports (Vite). Use EXPO_PUBLIC_DEV_HOST.
+    if (s.endsWith('.exp.direct')) return null;
+    return s;
+  };
+
+  const getHostFromExpoConstants = () => {
+    const candidates = [
+      Constants.expoGoConfig?.debuggerHost,
+      Constants.expoConfig?.hostUri,
+      Constants.manifest?.debuggerHost,
+      Constants.manifest2?.extra?.expoGo?.debuggerHost,
+    ];
+    for (const c of candidates) {
+      const host = normalizeDevMachineHost(String(c || ''));
+      if (host) return host;
+    }
+    return null;
+  };
+
+  const getDevHost = () => {
+    const configuredHost = process.env.EXPO_PUBLIC_DEV_HOST;
+    if (configuredHost && configuredHost.trim()) return configuredHost.trim();
+
+    const fromExpo = getHostFromExpoConstants();
+    if (fromExpo) return fromExpo;
+
+    const scriptURL = NativeModules?.SourceCode?.scriptURL;
+    if (scriptURL) {
+      try {
+        const parsed = new URL(scriptURL);
+        const h = normalizeDevMachineHost(parsed.hostname);
+        if (h) return h;
+      } catch (_error) {
+        // Fall through.
+      }
+    }
+
+    return Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1';
+  };
+
+  const devHost = getDevHost();
+  const hostHint =
+    devHost === '10.0.2.2' || devHost === '127.0.0.1'
+      ? 'On a real phone, set EXPO_PUBLIC_DEV_HOST to your PC Wi‑Fi IPv4 (ipconfig), or run Expo with LAN (not tunnel).'
+      : '';
+  const url = `http://${devHost}:5173`;
+  const apiBase = `http://${devHost}:5001`;
   const colorScheme = useColorScheme();
   const isDark = colorScheme !== 'light';
   const [expoOptimization, setExpoOptimization] = useState(null);
   const [loadingOptimization, setLoadingOptimization] = useState(true);
+  const [webviewError, setWebviewError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -47,10 +115,17 @@ export default function App() {
               : 'Using local web experience. Backend optimization profile unavailable.'}
           </Text>
         )}
+        {!!hostHint && (
+          <Text style={[styles.hostHint, isDark ? styles.hostHintDark : styles.hostHintLight]}>{hostHint}</Text>
+        )}
+        <Text style={[styles.devTarget, isDark ? styles.devTargetDark : styles.devTargetLight]} numberOfLines={2}>
+          Web + API: {url} · {apiBase}
+        </Text>
       </View>
       <WebView 
         source={{ uri: url }} 
         style={styles.webview}
+        startInLoadingState={true}
         javaScriptEnabled={true}
         domStorageEnabled={true}
         scalesPageToFit={false}
@@ -58,7 +133,28 @@ export default function App() {
         bounces={false}
         userAgent="Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36"
         originWhitelist={['*']}
+        onError={(event) => {
+          const desc = event?.nativeEvent?.description || 'Unable to load local web app.';
+          setWebviewError(desc);
+        }}
+        onHttpError={(event) => {
+          const statusCode = event?.nativeEvent?.statusCode;
+          if (statusCode) setWebviewError(`Web app returned HTTP ${statusCode}.`);
+        }}
       />
+      {!!webviewError && (
+        <View style={[styles.webviewErrorCard, isDark ? styles.webviewErrorCardDark : styles.webviewErrorCardLight]}>
+          <Text style={[styles.webviewErrorTitle, isDark ? styles.webviewErrorTitleDark : styles.webviewErrorTitleLight]}>
+            Web loading error
+          </Text>
+          <Text style={[styles.webviewErrorText, isDark ? styles.webviewErrorTextDark : styles.webviewErrorTextLight]}>
+            {webviewError}
+          </Text>
+          <Text style={[styles.webviewErrorText, isDark ? styles.webviewErrorTextDark : styles.webviewErrorTextLight]}>
+            Check that Vite is running at {url}
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -114,6 +210,29 @@ const styles = StyleSheet.create({
   optimizationMetaLight: {
     color: '#2563eb',
   },
+  hostHint: {
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 6,
+  },
+  hostHintDark: {
+    color: '#fbbf24',
+  },
+  hostHintLight: {
+    color: '#b45309',
+  },
+  devTarget: {
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 4,
+    opacity: 0.85,
+  },
+  devTargetDark: {
+    color: '#94a3b8',
+  },
+  devTargetLight: {
+    color: '#64748b',
+  },
   loadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -122,5 +241,41 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1, 
     backgroundColor: '#0f172a' 
+  },
+  webviewErrorCard: {
+    marginHorizontal: 12,
+    marginBottom: 12,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  webviewErrorCardDark: {
+    backgroundColor: '#3f1d1d',
+    borderColor: '#7f1d1d',
+  },
+  webviewErrorCardLight: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+  },
+  webviewErrorTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  webviewErrorTitleDark: {
+    color: '#fecaca',
+  },
+  webviewErrorTitleLight: {
+    color: '#991b1b',
+  },
+  webviewErrorText: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  webviewErrorTextDark: {
+    color: '#fecaca',
+  },
+  webviewErrorTextLight: {
+    color: '#7f1d1d',
   }
 });

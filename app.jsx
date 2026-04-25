@@ -1352,9 +1352,7 @@ const SignInPage = ({ onSignIn }) => {
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent" />
         <div className="relative z-10">
           <div className="flex justify-center mb-8">
-            <div className="h-24 w-auto flex items-center justify-center p-2 rounded-2xl bg-white/5 dark:bg-white/10 shadow-sm border border-white/20">
-              <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="h-full object-contain drop-shadow-sm" />
-            </div>
+            <img src="/RIT WHITE LOGO.png" alt="RIT IMS" className="w-auto h-20 object-contain" />
           </div>
 
           <div className="text-center mb-10">
@@ -2682,9 +2680,7 @@ const App = () => {
         {/* Logo Section */}
         <div className="h-28 flex items-center px-8 relative">
           <div className="flex items-center gap-4 w-full">
-            <div className={`w-12 h-12 rounded-[16px] bg-white dark:bg-slate-800 flex items-center justify-center flex-shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.1)] relative overflow-hidden group border ${currentTheme.neoBorder}`}>
-              <img src="/RIT WHITE LOGO.png" alt="RIT" className="w-auto h-16 object-cover scale-125" />
-            </div>
+            <img src="/RIT WHITE LOGO.png" alt="RIT" className="w-auto h-12 object-contain flex-shrink-0" />
 
             {!isSidebarCollapsed && (
               <div className="flex flex-col animate-fade-in">
@@ -2736,8 +2732,8 @@ const App = () => {
             >
               <Menu size={18} className={`${currentTheme.textPrimary}`} />
             </button>
-            <div className="md:hidden w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center -ml-1 border shadow-sm border-slate-200/50 dark:border-white/10 overflow-hidden">
-              <img src="/RIT WHITE LOGO.png" alt="RIT" className="w-auto h-12 object-cover scale-150" />
+            <div className="md:hidden -ml-1">
+              <img src="/RIT WHITE LOGO.png" alt="RIT" className="w-auto h-10 object-contain" />
             </div>
 
             <h2 className={`text-xl font-bold tracking-tight ${currentTheme.textPrimary} hidden md:block opacity-0 translate-y-2 animate-[fade-in-up_0.4s_ease-out_forwards]`}>

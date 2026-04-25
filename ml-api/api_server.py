@@ -5,6 +5,8 @@
 
 import os
 import json
+import re
+import uuid
 from datetime import datetime
 from io import BytesIO
 from flask import Flask, request, jsonify, send_file # type: ignore
@@ -20,6 +22,16 @@ DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_CSV = os.path.join(DATA_DIR, 'data.csv')
 CACHE_FILE = os.path.join(DATA_DIR, 'swot_cache.json')
 SWOT_CACHE_UPDATED_AT = None
+SECURITY_EVENTS = []
+MAX_SECURITY_EVENTS = 200
+SUSPICIOUS_PATTERNS = [
+    re.compile(r"('|%27)\s*or\s+('|%27)?1('|%27)?\s*=\s*('|%27)?1", re.IGNORECASE),
+    re.compile(r"union\s+select", re.IGNORECASE),
+    re.compile(r"drop\s+table", re.IGNORECASE),
+    re.compile(r"<script", re.IGNORECASE),
+    re.compile(r"\.\./"),
+    re.compile(r"\bselect\b.+\bfrom\b", re.IGNORECASE),
+]
 IMS_SECURITY_V2 = {
     'blockchain_layer': {
         'technology': 'Hyperledger Fabric / Private Ethereum',
@@ -265,6 +277,69 @@ def _tabular_lines(title, subtitle, rows):
     return lines
 
 
+def _get_remote_ip():
+    forwarded = request.headers.get('X-Forwarded-For', '')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.remote_addr or 'unknown'
+
+
+def _security_event(event_type, severity, message, details=None):
+    entry = {
+        'id': str(uuid.uuid4()),
+        'timestamp': _utc_now_iso(),
+        'type': event_type,
+        'severity': severity,
+        'message': message,
+        'path': request.path,
+        'method': request.method,
+        'ip': _get_remote_ip(),
+        'details': details or {},
+    }
+    SECURITY_EVENTS.insert(0, entry)
+    if len(SECURITY_EVENTS) > MAX_SECURITY_EVENTS:
+        del SECURITY_EVENTS[MAX_SECURITY_EVENTS:]
+    return entry
+
+
+def _is_suspicious_text(text):
+    if not text:
+        return False
+    for pattern in SUSPICIOUS_PATTERNS:
+        if pattern.search(text):
+            return True
+    return False
+
+
+def _request_input_snapshot():
+    parts = []
+    if request.query_string:
+        parts.append(request.query_string.decode('utf-8', errors='ignore'))
+    if request.args:
+        parts.append(json.dumps(request.args.to_dict(flat=True), ensure_ascii=True))
+    if request.is_json:
+        body = request.get_json(silent=True)
+        if body is not None:
+            parts.append(json.dumps(body, ensure_ascii=True))
+    return " ".join(parts)
+
+
+@app.before_request
+def detect_suspicious_input():
+    if request.path.startswith('/api/security/alerts'):
+        return
+    payload_text = _request_input_snapshot()
+    if _is_suspicious_text(payload_text):
+        _security_event(
+            event_type='suspicious_input',
+            severity='high',
+            message='Suspicious request pattern detected and blocked for this action.',
+            details={'payloadPreview': payload_text[:220]},
+        )
+        if request.path in ('/api/swot/result', '/api/swot/predict', '/api/swot/run'):
+            return jsonify({'error': 'Suspicious request blocked by protection layer'}), 400
+
+
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({'status': 'ok'})
@@ -280,6 +355,9 @@ def get_expo_optimization_v1():
 
 @app.route('/api/swot/run', methods=['POST'])
 def run_swot():
+    blocked = _require_admin_access('swot_run')
+    if blocked:
+        return blocked
     global SWOT_RESULTS, SWOT_SUMMARY, SWOT_CACHE_UPDATED_AT
     filepath = DEFAULT_CSV
     if request.files:
@@ -354,6 +432,41 @@ def cache_status():
         'cacheFile': CACHE_FILE,
     })
 
+
+def _is_admin_authorized():
+    required_token = os.environ.get('ADMIN_API_TOKEN', '').strip()
+    if not required_token:
+        return True
+    provided = (request.headers.get('X-Admin-Token') or '').strip()
+    return provided == required_token
+
+
+def _require_admin_access(endpoint_name):
+    if _is_admin_authorized():
+        return None
+    _security_event(
+        event_type='unauthorized_admin_access',
+        severity='critical',
+        message=f'Unauthorized attempt on admin endpoint: {endpoint_name}',
+    )
+    return jsonify({'error': 'Unauthorized'}), 403
+
+
+@app.route('/api/security/alerts', methods=['GET'])
+def get_security_alerts():
+    blocked = _require_admin_access('security_alerts')
+    if blocked:
+        return blocked
+    try:
+        limit = int(request.args.get('limit', '20'))
+    except ValueError:
+        limit = 20
+    limit = max(1, min(limit, 100))
+    return jsonify({
+        'alerts': SECURITY_EVENTS[:limit],
+        'total': len(SECURITY_EVENTS),
+    })
+
 @app.route('/api/swot/predict', methods=['POST'])
 def run_predict_mechanics():
     body = request.get_json(silent=True) or {}
@@ -377,6 +490,9 @@ def run_predict_mechanics():
 @app.route('/api/swot/all-students', methods=['GET'])
 def get_all_students():
     """Returns list of all analysed students with their data (admin only)."""
+    blocked = _require_admin_access('all_students')
+    if blocked:
+        return blocked
     if not SWOT_RESULTS:
         return jsonify({'error': 'No analysis run yet'}), 404
     students = []
@@ -402,6 +518,9 @@ def get_all_students():
 @app.route('/api/swot/class-dashboard', methods=['GET'])
 def class_dashboard():
     """Returns class-level aggregated performance data for admin dashboard."""
+    blocked = _require_admin_access('class_dashboard')
+    if blocked:
+        return blocked
     if not SWOT_RESULTS or SWOT_SUMMARY is None:
         return jsonify({'error': 'No analysis run yet'}), 404
 
@@ -510,6 +629,7 @@ if __name__ == '__main__':
     print('Endpoints: POST /api/swot/run, GET /api/swot/result/<email>, GET /api/swot/summary')
     print('           GET /api/swot/all-students, GET /api/swot/class-dashboard')
     print('           GET /api/swot/cache-status')
+    print('           GET /api/security/alerts')
     print('           GET /api/export/report/pdf?email=..., POST /api/export/attendance/pdf, POST /api/export/timetable/pdf')
     print('           GET /api/security/ims-v2, GET /api/mobile/expo-optimization-v1')
     serve(app, host=host, port=port, threads=8)

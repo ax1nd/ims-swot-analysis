@@ -11,6 +11,11 @@ from datetime import datetime
 from io import BytesIO
 from flask import Flask, request, jsonify, send_file # type: ignore
 from flask_cors import CORS # type: ignore
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 app = Flask(__name__)
 CORS(app)
@@ -622,9 +627,9 @@ _load_cache()
 
 
 if __name__ == '__main__':
-    from waitress import serve  # type: ignore
     host = os.environ.get('API_HOST', '0.0.0.0')
     port = int(os.environ.get('API_PORT', '5001'))
+    
     print(f'SWOT ML API: http://127.0.0.1:{port}')
     print('Endpoints: POST /api/swot/run, GET /api/swot/result/<email>, GET /api/swot/summary')
     print('           GET /api/swot/all-students, GET /api/swot/class-dashboard')
@@ -632,4 +637,24 @@ if __name__ == '__main__':
     print('           GET /api/security/alerts')
     print('           GET /api/export/report/pdf?email=..., POST /api/export/attendance/pdf, POST /api/export/timetable/pdf')
     print('           GET /api/security/ims-v2, GET /api/mobile/expo-optimization-v1')
-    serve(app, host=host, port=port, threads=8)
+
+    # Test Database connection if DB_HOST is configured
+    db_host = os.environ.get('DB_HOST')
+    if db_host:
+        print(f"[*] Attempting to connect to database at {db_host}...")
+        try:
+            import pymysql # type: ignore
+            from sqlalchemy import create_engine # type: ignore
+            db_user = os.environ.get('DB_USER', 'root')
+            db_password = os.environ.get('DB_PASSWORD', '')
+            db_name = os.environ.get('DB_NAME', 'ims_db')
+            db_port = os.environ.get('DB_PORT', '3306')
+            engine = create_engine(f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
+            with engine.connect() as conn:
+                print("[*] SUCCESS: Connected to the MySQL database.")
+        except Exception as e:
+            print(f"[!] WARNING: Could not connect to MySQL at {db_host}. Error: {e}")
+    else:
+        print("[*] NOTE: DB_HOST is not set. Backend will operate in local CSV mode.")
+
+    app.run(host=host, port=port, debug=True)

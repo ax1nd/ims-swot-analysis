@@ -1565,7 +1565,7 @@ const CgpaCalculatorContent = ({ currentTheme, darkMode }) => {
   );
 };
 
-const SWOT_API_BASE = 'http://127.0.0.1:5001';
+const SWOT_API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -2087,7 +2087,7 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange, role = '
   const [hasAlertBaseline, setHasAlertBaseline] = useState(false);
   const [liveAlert, setLiveAlert] = useState(null);
   const currentTheme = darkMode ? themes.dark : themes.light;
-  const API_BASE = 'http://127.0.0.1:5001';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
   const adminToken = localStorage.getItem('ADMIN_API_TOKEN') || '';
   const visibleNav = ADMIN_NAV.filter((item) => {
     if (role === 'hod') return ['hodDashboard', 'swot', 'audit', 'classroom', 'results', 'directory', 'password'].includes(item.id);
@@ -2281,7 +2281,7 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
   const [attendanceLockHours, setAttendanceLockHours] = useState(() => localStorage.getItem('attendance_lock_hours') || '24');
   const [hodSearch, setHodSearch] = useState('');
   
-  const API_BASE = 'http://127.0.0.1:5001';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
   const adminToken = localStorage.getItem('ADMIN_API_TOKEN') || '';
   const adminHeaders = adminToken ? { 'X-Admin-Token': adminToken } : {};
   const adminFetch = (url, options = {}) => {

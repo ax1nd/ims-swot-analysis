@@ -14,7 +14,10 @@ from flask import Flask, request, jsonify, send_file # type: ignore
 from flask_cors import CORS # type: ignore
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    # Try current directory .env first, then parent directory
+    if not load_dotenv():
+        parent_env = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+        load_dotenv(parent_env)
 except ImportError:
     pass
 

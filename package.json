@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "backend": "python3 ml-api/api_server.py",
     "build": "vite build",
     "preview": "vite preview"
   },

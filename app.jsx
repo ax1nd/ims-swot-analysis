@@ -1693,7 +1693,366 @@ const CgpaCalculatorContent = ({ currentTheme, darkMode }) => {
   );
 };
 
+
 const SWOT_API_BASE = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : (import.meta.env.PROD ? '' : 'http://127.0.0.1:5001');
+
+// ─── FEEDBACK SYSTEM ──────────────────────────────────────────────────────────
+
+const FEEDBACK_SUBJECTS = [
+  { code: 'CS23411', name: 'Database Management Systems', faculty: 'PANDIARAJAN T.' },
+  { code: 'CS23413', name: 'Theory of Computation', faculty: 'ANGALAPARAMESWARI A.' },
+  { code: 'CS23414', name: 'Software Development Practices', faculty: 'SRINIVASAN M.L.' },
+  { code: 'CS23431', name: 'Design and Analysis of Algorithms', faculty: 'MURUGAN P.' },
+  { code: 'AL23432', name: 'Machine Learning Techniques', faculty: 'ARAVINDH S.' },
+  { code: 'CS23421', name: 'DBMS Laboratory', faculty: 'PANDIARAJAN T.' },
+];
+
+const FEEDBACK_QUESTIONS = [
+  'The faculty explains concepts clearly and effectively.',
+  'The course material is well-organized and relevant.',
+  'The faculty is punctual and completes the syllabus on time.',
+  'The faculty is approachable and encourages questions.',
+  'Assignments and assessments are fair and linked to learning objectives.',
+  'The faculty uses examples and practical demonstrations to aid understanding.',
+];
+
+const FEEDBACK_STORAGE_KEY = 'ims_student_feedback_v1';
+
+const saveFeedback = (regNo, data) => {
+  const all = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE_KEY) || '{}');
+  all[regNo] = { ...data, submittedAt: new Date().toISOString() };
+  localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(all));
+};
+
+const getFeedback = (regNo) => {
+  const all = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE_KEY) || '{}');
+  return all[regNo] || null;
+};
+
+const getAllFeedback = () => JSON.parse(localStorage.getItem(FEEDBACK_STORAGE_KEY) || '{}');
+
+const StarRating = ({ value, onChange, readOnly }) => (
+  <div className="flex gap-1">
+    {[1,2,3,4,5].map(s => (
+      <button
+        key={s}
+        type="button"
+        disabled={readOnly}
+        onClick={() => !readOnly && onChange(s)}
+        className={`text-xl transition-transform hover:scale-110 ${s <= value ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600'} ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
+      >★</button>
+    ))}
+  </div>
+);
+
+const FeedbackPage = ({ currentTheme, darkMode, studentRegNo, studentName }) => {
+  const existing = getFeedback(studentRegNo);
+  const [submitted, setSubmitted] = useState(!!existing);
+  const [currentSubject, setCurrentSubject] = useState(0);
+  const [ratings, setRatings] = useState(() =>
+    FEEDBACK_SUBJECTS.reduce((acc, s) => {
+      acc[s.code] = { scores: Array(FEEDBACK_QUESTIONS.length).fill(0), comment: '' };
+      return acc;
+    }, {})
+  );
+
+  const glassCard = `bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] p-6`;
+  const subject = FEEDBACK_SUBJECTS[currentSubject];
+  const subjectRating = ratings[subject.code];
+  const allSubjectsScored = FEEDBACK_SUBJECTS.every(s =>
+    ratings[s.code].scores.every(sc => sc > 0)
+  );
+
+  const handleSubmit = () => {
+    saveFeedback(studentRegNo, { name: studentName, regNo: studentRegNo, ratings });
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="p-4 md:p-10 md:pt-4 max-w-4xl mx-auto w-full animate-fade-in">
+        <div className={`${glassCard} text-center`}>
+          <div className="text-6xl mb-4">✅</div>
+          <h2 className={`${currentTheme.textPrimary} text-2xl font-bold mb-2`}>Feedback Submitted!</h2>
+          <p className={`${currentTheme.textSecondary} mb-6`}>Thank you, {studentName || 'Student'}. Your feedback has been recorded.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+            {FEEDBACK_SUBJECTS.map(s => {
+              const avg = (existing || { ratings }).ratings?.[s.code]?.scores?.reduce((a,b)=>a+b,0) / FEEDBACK_QUESTIONS.length || 0;
+              return (
+                <div key={s.code} className="bg-white/30 dark:bg-white/[0.05] rounded-xl p-4 text-left">
+                  <p className={`${currentTheme.textPrimary} font-semibold text-sm`}>{s.name}</p>
+                  <p className={`${currentTheme.textSecondary} text-xs mb-2`}>{s.faculty}</p>
+                  <StarRating value={Math.round(avg)} readOnly />
+                  <p className={`${currentTheme.textSecondary} text-xs mt-1`}>Avg: {avg.toFixed(1)} / 5</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-4xl mx-auto w-full animate-fade-in space-y-6">
+      <div className={glassCard}>
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-2xl">📋</span>
+          <div>
+            <h2 className={`${currentTheme.textPrimary} text-xl font-bold`}>Course Feedback Form</h2>
+            <p className={`${currentTheme.textSecondary} text-sm`}>Rate each subject honestly. Your feedback is confidential and helps improve teaching quality.</p>
+          </div>
+        </div>
+        {/* Subject tabs */}
+        <div className="flex flex-wrap gap-2 mt-4 mb-6">
+          {FEEDBACK_SUBJECTS.map((s, i) => {
+            const done = ratings[s.code].scores.every(sc => sc > 0);
+            return (
+              <button
+                key={s.code}
+                onClick={() => setCurrentSubject(i)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                  i === currentSubject
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                    : done
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                      : `bg-white/30 dark:bg-white/[0.05] ${currentTheme.textSecondary} border-white/40 dark:border-white/10`
+                }`}
+              >
+                {done ? '✓ ' : ''}{s.code}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Current subject */}
+        <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-xl p-4 mb-6 border border-blue-500/20">
+          <p className={`${currentTheme.textPrimary} font-bold text-base`}>{subject.name}</p>
+          <p className={`${currentTheme.textSecondary} text-sm`}>Faculty: {subject.faculty} &bull; Code: {subject.code}</p>
+        </div>
+
+        <div className="space-y-5">
+          {FEEDBACK_QUESTIONS.map((q, qi) => (
+            <div key={qi} className="bg-white/20 dark:bg-white/[0.03] rounded-xl p-4">
+              <p className={`${currentTheme.textPrimary} text-sm font-medium mb-2`}>{qi + 1}. {q}</p>
+              <StarRating
+                value={subjectRating.scores[qi]}
+                onChange={v => {
+                  const newScores = [...subjectRating.scores];
+                  newScores[qi] = v;
+                  setRatings(prev => ({
+                    ...prev,
+                    [subject.code]: { ...prev[subject.code], scores: newScores }
+                  }));
+                }}
+              />
+              <p className={`${currentTheme.textSecondary} text-xs mt-1`}>{['','Poor','Fair','Good','Very Good','Excellent'][subjectRating.scores[qi]] || 'Not rated'}</p>
+            </div>
+          ))}
+          <div className="bg-white/20 dark:bg-white/[0.03] rounded-xl p-4">
+            <p className={`${currentTheme.textPrimary} text-sm font-medium mb-2`}>Additional Comments (optional)</p>
+            <textarea
+              rows={3}
+              value={subjectRating.comment}
+              onChange={e => setRatings(prev => ({
+                ...prev,
+                [subject.code]: { ...prev[subject.code], comment: e.target.value }
+              }))}
+              placeholder="Share any specific feedback about this subject..."
+              className="w-full bg-white/40 dark:bg-white/[0.08] border border-white/40 dark:border-white/10 rounded-xl px-4 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mt-6 flex-wrap gap-3">
+          <div className="flex gap-2">
+            {currentSubject > 0 && (
+              <button onClick={() => setCurrentSubject(p => p - 1)} className="px-4 py-2 rounded-xl bg-slate-200/50 dark:bg-white/[0.08] text-sm font-semibold">← Previous</button>
+            )}
+            {currentSubject < FEEDBACK_SUBJECTS.length - 1 && (
+              <button onClick={() => setCurrentSubject(p => p + 1)} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-lg hover:bg-blue-700 transition-all">Next →</button>
+            )}
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={!allSubjectsScored}
+            className={`px-6 py-2 rounded-xl text-sm font-bold shadow-lg transition-all ${
+              allSubjectsScored
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/30'
+                : 'bg-slate-300/50 dark:bg-white/[0.08] text-slate-400 dark:text-slate-500 cursor-not-allowed'
+            }`}
+          >
+            {allSubjectsScored ? '✅ Submit Feedback' : `Rate all ${FEEDBACK_SUBJECTS.length} subjects to submit`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Faculty / HOD — Feedback Review: who hasn't submitted
+const FeedbackReviewPanel = ({ currentTheme, darkMode }) => {
+  const allFeedback = getAllFeedback();
+  const submitted = Object.keys(allFeedback);
+  const pending = Object.entries(STUDENT_EMAIL_BY_ROLL).filter(([roll]) => !submitted.includes(roll));
+  const glassCard = `bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] p-6`;
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-6xl mx-auto w-full animate-fade-in space-y-6">
+      <div className={glassCard}>
+        <h2 className={`${currentTheme.textPrimary} text-xl font-bold mb-1`}>📋 Feedback Review</h2>
+        <p className={`${currentTheme.textSecondary} text-sm mb-4`}>Track student feedback completion status for this semester.</p>
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-emerald-500/10 rounded-xl p-4 text-center border border-emerald-500/20">
+            <p className="text-3xl font-black text-emerald-500">{submitted.length}</p>
+            <p className={`${currentTheme.textSecondary} text-xs mt-1`}>Submitted</p>
+          </div>
+          <div className="bg-red-500/10 rounded-xl p-4 text-center border border-red-500/20">
+            <p className="text-3xl font-black text-red-500">{pending.length}</p>
+            <p className={`${currentTheme.textSecondary} text-xs mt-1`}>Pending</p>
+          </div>
+          <div className="bg-blue-500/10 rounded-xl p-4 text-center border border-blue-500/20">
+            <p className="text-3xl font-black text-blue-500">{submitted.length + pending.length}</p>
+            <p className={`${currentTheme.textSecondary} text-xs mt-1`}>Total Students</p>
+          </div>
+        </div>
+
+        {pending.length > 0 && (
+          <div className="mb-6">
+            <h3 className={`${currentTheme.textPrimary} font-bold text-sm uppercase tracking-wider mb-3 text-red-500`}>⚠ Pending Students ({pending.length})</h3>
+            <div className="overflow-x-auto rounded-xl border border-white/30 dark:border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-white/30 dark:bg-white/[0.05]">
+                  <tr>
+                    <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Roll No</th>
+                    <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Name</th>
+                    <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Email</th>
+                    <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pending.map(([roll, email]) => (
+                    <tr key={roll} className="border-t border-white/10 hover:bg-white/10 dark:hover:bg-white/[0.03] transition-colors">
+                      <td className={`p-3 font-mono text-xs ${currentTheme.textSecondary}`}>{roll}</td>
+                      <td className={`p-3 font-medium ${currentTheme.textPrimary}`}>{STUDENT_NAME_BY_ROLL[roll] || '—'}</td>
+                      <td className={`p-3 text-xs ${currentTheme.textSecondary}`}>{email}</td>
+                      <td className="p-3"><span className="px-2 py-0.5 rounded-full bg-red-500/15 text-red-500 text-xs font-bold">Pending</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {submitted.length > 0 && (
+          <div>
+            <h3 className={`${currentTheme.textPrimary} font-bold text-sm uppercase tracking-wider mb-3 text-emerald-500`}>✅ Submitted Students ({submitted.length})</h3>
+            <div className="overflow-x-auto rounded-xl border border-white/30 dark:border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-white/30 dark:bg-white/[0.05]">
+                  <tr>
+                    <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Roll No</th>
+                    <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Name</th>
+                    <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Submitted At</th>
+                    <th className={`p-3 text-left text-xs uppercase ${currentTheme.textSecondary}`}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submitted.map(roll => (
+                    <tr key={roll} className="border-t border-white/10 hover:bg-white/10 dark:hover:bg-white/[0.03] transition-colors">
+                      <td className={`p-3 font-mono text-xs ${currentTheme.textSecondary}`}>{roll}</td>
+                      <td className={`p-3 font-medium ${currentTheme.textPrimary}`}>{allFeedback[roll]?.name || STUDENT_NAME_BY_ROLL[roll] || '—'}</td>
+                      <td className={`p-3 text-xs ${currentTheme.textSecondary}`}>{allFeedback[roll]?.submittedAt ? new Date(allFeedback[roll].submittedAt).toLocaleString() : '—'}</td>
+                      <td className="p-3"><span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 text-xs font-bold">Submitted</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {submitted.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-4xl mb-3">📭</p>
+            <p className={`${currentTheme.textSecondary} text-sm`}>No feedback submissions yet.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Admin — Overall Feedback Analytics
+const FeedbackAnalyticsPanel = ({ currentTheme, darkMode }) => {
+  const allFeedback = getAllFeedback();
+  const submissions = Object.values(allFeedback);
+  const glassCard = `bg-white/40 dark:bg-white/[0.06] backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] p-6`;
+
+  const subjectStats = FEEDBACK_SUBJECTS.map(sub => {
+    const avgPerQ = FEEDBACK_QUESTIONS.map((_, qi) => {
+      const scores = submissions.filter(s => s.ratings?.[sub.code]).map(s => s.ratings[sub.code].scores[qi] || 0);
+      return scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+    });
+    const overall = avgPerQ.reduce((a,b)=>a+b,0) / FEEDBACK_QUESTIONS.length;
+    return { ...sub, avgPerQ, overall };
+  });
+
+  return (
+    <div className="p-4 md:p-10 md:pt-4 max-w-6xl mx-auto w-full animate-fade-in space-y-6">
+      <div className={glassCard}>
+        <h2 className={`${currentTheme.textPrimary} text-xl font-bold mb-1`}>📊 Feedback Analytics</h2>
+        <p className={`${currentTheme.textSecondary} text-sm mb-4`}>Aggregated feedback results from {submissions.length} student submissions.</p>
+
+        {submissions.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-5xl mb-4">📭</p>
+            <p className={`${currentTheme.textSecondary}`}>No feedback data available yet. Students need to submit their feedback first.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {subjectStats.map(sub => (
+              <div key={sub.code} className="bg-white/20 dark:bg-white/[0.04] rounded-xl p-5 border border-white/30 dark:border-white/10">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <div>
+                    <p className={`${currentTheme.textPrimary} font-bold`}>{sub.name}</p>
+                    <p className={`${currentTheme.textSecondary} text-xs`}>{sub.faculty} &bull; {sub.code}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-2xl font-black ${sub.overall >= 4 ? 'text-emerald-500' : sub.overall >= 3 ? 'text-amber-500' : 'text-red-500'}`}>{sub.overall.toFixed(2)}</p>
+                    <p className={`${currentTheme.textSecondary} text-xs`}>Overall / 5</p>
+                  </div>
+                </div>
+                {/* Overall bar */}
+                <div className="w-full bg-slate-200/50 dark:bg-white/[0.05] rounded-full h-2 mb-4">
+                  <div
+                    className={`h-2 rounded-full transition-all ${sub.overall >= 4 ? 'bg-emerald-500' : sub.overall >= 3 ? 'bg-amber-500' : 'bg-red-500'}`}
+                    style={{ width: `${(sub.overall/5)*100}%` }}
+                  />
+                </div>
+                {/* Per-question breakdown */}
+                <div className="space-y-2">
+                  {FEEDBACK_QUESTIONS.map((q, qi) => (
+                    <div key={qi} className="flex items-center gap-3">
+                      <p className={`${currentTheme.textSecondary} text-xs w-4`}>Q{qi+1}</p>
+                      <div className="flex-1 bg-slate-200/40 dark:bg-white/[0.05] rounded-full h-1.5">
+                        <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${(sub.avgPerQ[qi]/5)*100}%` }} />
+                      </div>
+                      <p className={`${currentTheme.textSecondary} text-xs w-8 text-right`}>{sub.avgPerQ[qi].toFixed(1)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── END FEEDBACK SYSTEM ──────────────────────────────────────────────────────
+
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -1716,20 +2075,26 @@ const downloadBlobFile = async (endpoint, payload, filenameFallback) => {
   URL.revokeObjectURL(url);
 };
 
-const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
+const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail, studentRegNo }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloadingReport, setDownloadingReport] = useState(false);
-  const email = studentEmail || 'aarav.sharma@example.com';
+  // Resolve email: prefer passed email, fallback to roll→email map, then show a clear error
+  const email = studentEmail || (studentRegNo && STUDENT_EMAIL_BY_ROLL[studentRegNo]) || null;
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
+    try {
+        if (!email) {
+          setError('Your account is not linked to a student email. Please contact admin.');
+          setLoading(false);
+          return;
+        }
         const res = await fetch(`${SWOT_API_BASE}/api/swot/result?email=${encodeURIComponent(email)}`);
         if (!res.ok) {
-          if (res.status === 404) setError('No analysis run yet. Ask admin to run SWOT analysis.');
+          if (res.status === 404) setError('No SWOT analysis found for your account. Ask admin to run analysis.');
           else setError('Could not load your SWOT result.');
           setData(null);
           return;
@@ -1737,7 +2102,7 @@ const SwotAnalysisContent = ({ currentTheme, darkMode, studentEmail }) => {
         const json = await res.json();
         if (!cancelled) setData(json);
       } catch (e) {
-        if (!cancelled) setError('Cannot reach analysis server. Run: cd ml-api && python api_server.py');
+        if (!cancelled) setError('Cannot reach analysis server. Make sure the backend is running.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -2074,7 +2439,7 @@ const SignInPage = ({ onSignIn }) => {
                 disabled={quickLoginMode !== null}
                 className="w-full py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-[0_8px_22px_rgba(217,119,6,0.3)] transition-all"
               >
-                {quickLoginMode === 'hod' ? 'Loading HOD…' : 'HOD Login'}
+                {quickLoginMode === 'hod' ? 'Loading Faculty…' : 'Faculty Login'}
               </button>
               <button
                 type="button"
@@ -2144,7 +2509,7 @@ const SignInPage = ({ onSignIn }) => {
 
 // RIT Digital Twin | Smart Campus - Admin Panel (reference-based design)
 const ADMIN_NAV = [
-  { id: 'hodDashboard', label: 'HOD Dashboard', icon: LayoutDashboard },
+  { id: 'hodDashboard', label: 'Faculty Dashboard', icon: LayoutDashboard },
   { id: 'adminDashboard', label: 'Admin Dashboard', icon: ShieldCheck },
   { id: 'userMgmt', label: 'User Management', icon: Users },
   { id: 'systemControl', label: 'System Control', icon: Settings },
@@ -2152,6 +2517,8 @@ const ADMIN_NAV = [
   { id: 'courseData', label: 'Course Data', icon: BookOpen },
   { id: 'swot', label: 'SWOT Analysis', icon: Activity },
   { id: 'audit', label: 'Audit Logs', icon: FileText },
+  { id: 'feedbackReview', label: 'Feedback Review', icon: MessageSquare },
+  { id: 'feedbackAnalytics', label: 'Feedback Analytics', icon: BarChart3 },
   { id: 'timetables', label: 'Exam Timetables', icon: Calendar },
   { id: 'results', label: 'Results', icon: BarChart3 },
   { id: 'substitutions', label: 'Class Substitutions', icon: Users },
@@ -2218,8 +2585,8 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange, role = '
   const API_BASE = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : (import.meta.env.PROD ? '' : 'http://127.0.0.1:5001');
   const adminToken = localStorage.getItem('ADMIN_API_TOKEN') || '';
   const visibleNav = ADMIN_NAV.filter((item) => {
-    if (role === 'hod') return ['hodDashboard', 'swot', 'audit', 'classroom', 'results', 'directory', 'password'].includes(item.id);
-    if (role === 'teacher') return ['classroom', 'swot', 'results', 'password'].includes(item.id);
+    if (role === 'hod') return ['hodDashboard', 'swot', 'audit', 'feedbackReview', 'classroom', 'results', 'directory', 'password'].includes(item.id);
+    if (role === 'teacher') return ['classroom', 'swot', 'results', 'feedbackReview', 'password'].includes(item.id);
     return true;
   });
 
@@ -2384,6 +2751,7 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange, role = '
 const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securityAlerts = [], role = 'admin' }) => {
   const [swotRunning, setSwotRunning] = useState(false);
   const [swotMessage, setSwotMessage] = useState(null);
+
   const [swotFile, setSwotFile] = useState(null);
   const [classDashboard, setClassDashboard] = useState(null);
   const [allStudents, setAllStudents] = useState(null);
@@ -2805,6 +3173,10 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
       </div>
     );
   }
+
+  // Feedback panels (placed here, after all hooks)
+  if (section === 'feedbackReview') return <FeedbackReviewPanel currentTheme={currentTheme} darkMode={darkMode} />;
+  if (section === 'feedbackAnalytics') return <FeedbackAnalyticsPanel currentTheme={currentTheme} darkMode={darkMode} />;
 
   // Result Publication Portal
   if (section === 'results') {
@@ -3532,6 +3904,16 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
             </div>
             <h4 className={`${currentTheme.textPrimary} font-semibold text-sm mb-2`}>Rapid Actions</h4>
             <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={async () => {
+                  const res = await adminFetch(`${API_BASE}/api/security/blockchain/verify`);
+                  const data = await res.json();
+                  alert(data.integrity ? `Blockchain Verified! ${data.blockCount} blocks intact.` : `TAMPER DETECTED! ${data.error || ''}`);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-emerald-600/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold"
+              >
+                Verify Blockchain Integrity
+              </button>
               {dashboard.actions.map((action) => (
                 <button key={action} className="px-3 py-1.5 rounded-lg bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-semibold">
                   {action}
@@ -3627,6 +4009,7 @@ const App = () => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard' },
     { icon: Activity, label: 'SWOT Analysis' },
+    { icon: MessageSquare, label: 'Feedback' },
     { icon: Calendar, label: 'My Timetable' },
     { icon: BookOpen, label: 'My Subject Registration' },
     { icon: ClipboardList, label: 'Leave / OD' },
@@ -3635,7 +4018,6 @@ const App = () => {
     { icon: Clock, label: 'LAB Mark' },
     { icon: BarChart3, label: 'Grade Book' },
     { icon: GraduationCap, label: 'CGPA Calculator' },
-    { icon: MessageSquare, label: 'Messages' },
     { icon: KeyRound, label: 'Change Password' },
     { icon: Wallet, label: 'Academic Fee' },
     { icon: Settings, label: 'Profile & Settings' },
@@ -4049,7 +4431,12 @@ const App = () => {
 
         {/* SWOT Analysis Content Container */}
         {activeTab === 'SWOT Analysis' && (
-          <SwotAnalysisContent currentTheme={currentTheme} darkMode={darkMode} studentEmail={studentEmail} />
+          <SwotAnalysisContent currentTheme={currentTheme} darkMode={darkMode} studentEmail={studentEmail} studentRegNo={studentRegNo} />
+        )}
+
+        {/* Feedback Page */}
+        {activeTab === 'Feedback' && (
+          <FeedbackPage currentTheme={currentTheme} darkMode={darkMode} studentRegNo={studentRegNo} studentName={studentName} />
         )}
 
         {/* Profile & Settings */}

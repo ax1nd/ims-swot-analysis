@@ -66,6 +66,21 @@ CREATE INDEX idx_students_email ON students(email);
 CREATE INDEX idx_cat_marks_student ON cat_marks(student_id);
 CREATE INDEX idx_cat_marks_course  ON cat_marks(course_id);
 
+-- -----------------------------------------------------------------------------
+-- 4. Audit Blockchain (Immutable Ledger)
+-- Each entry links to the previous one via hash for anti-tampering.
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS audit_blockchain (
+  id              INT PRIMARY KEY AUTO_INCREMENT,
+  timestamp       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  actor           VARCHAR(128) NOT NULL,
+  action_type     VARCHAR(64) NOT NULL,
+  payload         JSON NOT NULL,
+  prev_hash       VARCHAR(64) NOT NULL,
+  current_hash    VARCHAR(64) NOT NULL,
+  INDEX idx_blockchain_hash (current_hash)
+);
+
 -- =============================================================================
 -- SYNTHETIC DATA
 -- =============================================================================

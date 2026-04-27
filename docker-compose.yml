@@ -11,6 +11,7 @@ services:
   db:
     image: mysql:8.0
     container_name: ims-db
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: ims_db
@@ -37,6 +38,7 @@ services:
       context: ./ml-api
       dockerfile: Dockerfile
     container_name: ims-backend
+    restart: always
     ports:
       - "5001:5001"
     environment:
@@ -58,6 +60,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ims-frontend
+    restart: always
     ports:
       - "80:80"
     depends_on:

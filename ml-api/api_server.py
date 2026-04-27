@@ -7,6 +7,7 @@ import os
 import json
 import re
 import uuid
+import hashlib
 from datetime import datetime
 from io import BytesIO
 from flask import Flask, request, jsonify, send_file # type: ignore
@@ -108,6 +109,44 @@ EXPO_OPTIMIZATION_V1 = {
         'keyboard_avoidance': "KeyboardAvoidingView with 'padding' behavior for iOS",
     },
 }
+
+
+class IMSBlockchain:
+    def __init__(self, engine):
+        self.engine = engine
+
+    def get_latest_hash(self):
+        try:
+            with self.engine.connect() as conn:
+                from sqlalchemy import text
+                result = conn.execute(text("SELECT current_hash FROM audit_blockchain ORDER BY id DESC LIMIT 1"))
+                row = result.fetchone()
+                return row[0] if row else "0" * 64
+        except Exception as e:
+            print(f"Blockchain Fetch Error: {e}")
+            return "0" * 64
+
+    def add_block(self, actor, action_type, payload):
+        prev_hash = self.get_latest_hash()
+        payload_str = json.dumps(payload, sort_keys=True)
+        block_content = f"{actor}{action_type}{payload_str}{prev_hash}"
+        current_hash = hashlib.sha256(block_content.encode()).hexdigest()
+
+        try:
+            with self.engine.connect() as conn:
+                from sqlalchemy import text
+                conn.execute(
+                    text("INSERT INTO audit_blockchain (actor, action_type, payload, prev_hash, current_hash) VALUES (:actor, :action, :payload, :prev, :curr)"),
+                    {"actor": actor, "action": action_type, "payload": payload_str, "prev": prev_hash, "curr": current_hash}
+                )
+                conn.commit()
+                return current_hash
+        except Exception as e:
+            print(f"Blockchain Write Error: {e}")
+            return None
+
+
+BLOCKCHAIN_INSTANCE = None
 
 
 def _utc_now_iso():
@@ -304,6 +343,11 @@ def _security_event(event_type, severity, message, details=None):
     SECURITY_EVENTS.insert(0, entry)
     if len(SECURITY_EVENTS) > MAX_SECURITY_EVENTS:
         del SECURITY_EVENTS[MAX_SECURITY_EVENTS:]
+    
+    # Anchor to Hardcoded Blockchain if available
+    if BLOCKCHAIN_INSTANCE:
+        BLOCKCHAIN_INSTANCE.add_block(actor=entry.get('ip', 'system'), action_type=event_type, payload=entry)
+        
     return entry
 
 
@@ -471,6 +515,53 @@ def get_security_alerts():
         'alerts': SECURITY_EVENTS[:limit],
         'total': len(SECURITY_EVENTS),
     })
+
+@app.route('/api/security/blockchain/verify', methods=['GET'])
+def verify_blockchain():
+    blocked = _require_admin_access('blockchain_verify')
+    if blocked:
+        return blocked
+    
+    if not BLOCKCHAIN_INSTANCE:
+        return jsonify({'error': 'Blockchain layer not initialized (no DB connection)'}), 400
+    
+    try:
+        with BLOCKCHAIN_INSTANCE.engine.connect() as conn:
+            from sqlalchemy import text
+            result = conn.execute(text("SELECT id, actor, action_type, payload, prev_hash, current_hash FROM audit_blockchain ORDER BY id ASC"))
+            blocks = result.fetchall()
+            
+            integrity_valid = True
+            expected_prev_hash = "0" * 64
+            validation_details = []
+            
+            for b in blocks:
+                bid, actor, action, payload, prev_h, curr_h = b
+                # Re-calculate hash
+                payload_str = json.dumps(payload, sort_keys=True)
+                content = f"{actor}{action}{payload_str}{prev_h}"
+                calc_h = hashlib.sha256(content.encode()).hexdigest()
+                
+                block_valid = (calc_h == curr_h) and (prev_h == expected_prev_hash)
+                if not block_valid:
+                    integrity_valid = False
+                
+                validation_details.append({
+                    'id': bid,
+                    'valid': block_valid,
+                    'action': action,
+                    'timestamp': str(datetime.now()) # Placeholder for actual DB timestamp if needed
+                })
+                expected_prev_hash = curr_h
+                
+            return jsonify({
+                'status': 'verified' if integrity_valid else 'tampered',
+                'integrity': integrity_valid,
+                'blockCount': len(blocks),
+                'details': validation_details
+            })
+    except Exception as e:
+        return jsonify({'error': f'Verification failed: {e}'}), 500
 
 @app.route('/api/swot/predict', methods=['POST'])
 def run_predict_mechanics():
@@ -652,6 +743,8 @@ if __name__ == '__main__':
             engine = create_engine(f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
             with engine.connect() as conn:
                 print("[*] SUCCESS: Connected to the MySQL database.")
+                BLOCKCHAIN_INSTANCE = IMSBlockchain(engine)
+                print("[*] Blockchain Layer Initialized.")
         except Exception as e:
             print(f"[!] WARNING: Could not connect to MySQL at {db_host}. Error: {e}")
     else:

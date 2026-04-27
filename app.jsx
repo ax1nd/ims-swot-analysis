@@ -62,7 +62,134 @@ import { signInWithGoogle, signOutFirebase, isAllowedEmail, isFirebaseConfigured
 // Admin credentials (shared login page; these redirect to admin panel)
 const ADMIN_USERNAME = '2117240020056';
 // Roll number -> student email (for SWOT analysis; matches sql/swot_cat_marks_schema_and_data.sql)
-const STUDENT_EMAIL_BY_ROLL = { '2117240020033': 'aarav.sharma@example.com' };
+const STUDENT_EMAIL_BY_ROLL = {
+  '2117240020001': 'aakash.b.k@example.com',
+  '2117240020002': 'aarthi.m@example.com',
+  '2117240020003': 'aashida.v@example.com',
+  '2117240020004': 'abhilash.m@example.com',
+  '2117240020005': 'abimanue.m@example.com',
+  '2117240020006': 'abina.jerlin.m@example.com',
+  '2117240020007': 'abinaya.s.g@example.com',
+  '2117240020008': 'abinesh.s@example.com',
+  '2117240020009': 'abirami.b@example.com',
+  '2117240020010': 'abishek.s@example.com',
+  '2117240020011': 'adarsh.h@example.com',
+  '2117240020012': 'aditya.parthasarathy@example.com',
+  '2117240020013': 'afsa.r@example.com',
+  '2117240020014': 'aiswaryaa.babu@example.com',
+  '2117240020015': 'akash.a@example.com',
+  '2117240020016': 'akshara.p@example.com',
+  '2117240020017': 'akshay.v@example.com',
+  '2117240020018': 'akshaya.k@example.com',
+  '2117240020019': 'akshaya.m@example.com',
+  '2117240020020': 'akshaya.r.l@example.com',
+  '2117240020021': 'akshaya.darshini.n@example.com',
+  '2117240020022': 'akshitha.p@example.com',
+  '2117240020023': 'akshitha.s@example.com',
+  '2117240020024': 'ambati.nikhitha@example.com',
+  '2117240020025': 'amudhan.m@example.com',
+  '2117240020026': 'anisha.pathak@example.com',
+  '2117240020027': 'aniska.s.p@example.com',
+  '2117240020028': 'anjasri.v@example.com',
+  '2117240020029': 'anusha.b@example.com',
+  '2117240020030': 'anu.shri.r@example.com',
+  '2117240020031': 'aravindraj.d@example.com',
+  '2117240020032': 'arnav.kumar.r@example.com',
+  '2117240020033': 'arvind.n@example.com',
+  '2117240020034': 'asanthika.a@example.com',
+  '2117240020035': 'aseema.s@example.com',
+  '2117240020036': 'asha.a@example.com',
+  '2117240020037': 'ashwin.g@example.com',
+  '2117240020038': 'asin.d@example.com',
+  '2117240020039': 'aswanthar.m@example.com',
+  '2117240020040': 'aswin.r@example.com',
+  '2117240020041': 'aswin.kumar.e.n@example.com',
+  '2117240020042': 'aswini.m@example.com',
+  '2117240020043': 'athishwar.j@example.com',
+  '2117240020044': 'austin.joshua.m@example.com',
+  '2117240020045': 'avineshwaran.a@example.com',
+  '2117240020046': 'balaji.m.r@example.com',
+  '2117240020047': 'balaji.p@example.com',
+  '2117240020048': 'baskar.j@example.com',
+  '2117240020049': 'bavatharini.r@example.com',
+  '2117240020050': 'bharanidharan.r@example.com',
+  '2117240020051': 'bhuvaneshwaran.s@example.com',
+  '2117240020052': 'catherin.jenira.i@example.com',
+  '2117240020053': 'charumathi.k@example.com',
+  '2117240020054': 'chris.alan@example.com',
+  '2117240020055': 'chris.melvyn.raj.p@example.com',
+  '2117240020056': 'christopher.j@example.com',
+  '2117240020057': 'darshan.a.r@example.com',
+  '2117240020058': 'darshan.b@example.com',
+  '2117240020059': 'deborhal.l@example.com',
+  '2117240020060': 'deepa.shree.c@example.com',
+  '2117240020061': 'deepesh.v@example.com',
+  '2117240020062': 'deepika.p@example.com'
+};
+const STUDENT_NAME_BY_ROLL = {
+  '2117240020001': 'Aakash B K',
+  '2117240020002': 'Aarthi M',
+  '2117240020003': 'Aashida V',
+  '2117240020004': 'Abhilash M',
+  '2117240020005': 'Abimanue M',
+  '2117240020006': 'Abina Jerlin M',
+  '2117240020007': 'Abinaya S G',
+  '2117240020008': 'Abinesh S',
+  '2117240020009': 'Abirami B',
+  '2117240020010': 'Abishek S',
+  '2117240020011': 'Adarsh H',
+  '2117240020012': 'Aditya Parthasarathy',
+  '2117240020013': 'Afsa R',
+  '2117240020014': 'Aiswaryaa Babu',
+  '2117240020015': 'Akash A',
+  '2117240020016': 'Akshara P',
+  '2117240020017': 'Akshay V',
+  '2117240020018': 'Akshaya K',
+  '2117240020019': 'Akshaya M',
+  '2117240020020': 'Akshaya R L',
+  '2117240020021': 'Akshaya Darshini N',
+  '2117240020022': 'Akshitha P',
+  '2117240020023': 'Akshitha S',
+  '2117240020024': 'Ambati Nikhitha',
+  '2117240020025': 'Amudhan M',
+  '2117240020026': 'Anisha Pathak',
+  '2117240020027': 'Aniska S P',
+  '2117240020028': 'Anjasri V',
+  '2117240020029': 'Anusha B',
+  '2117240020030': 'Anu Shri R',
+  '2117240020031': 'Aravindraj D',
+  '2117240020032': 'Arnav Kumar R',
+  '2117240020033': 'Arvind N',
+  '2117240020034': 'Asanthika A',
+  '2117240020035': 'Aseema S',
+  '2117240020036': 'Asha A',
+  '2117240020037': 'Ashwin G',
+  '2117240020038': 'Asin D',
+  '2117240020039': 'Aswanthar M',
+  '2117240020040': 'Aswin R',
+  '2117240020041': 'Aswin Kumar E N',
+  '2117240020042': 'Aswini M',
+  '2117240020043': 'Athishwar J',
+  '2117240020044': 'Austin Joshua M',
+  '2117240020045': 'Avineshwaran A',
+  '2117240020046': 'Balaji M R',
+  '2117240020047': 'Balaji P',
+  '2117240020048': 'Baskar J',
+  '2117240020049': 'Bavatharini R',
+  '2117240020050': 'Bharanidharan R',
+  '2117240020051': 'Bhuvaneshwaran S',
+  '2117240020052': 'Catherin Jenira I',
+  '2117240020053': 'Charumathi K',
+  '2117240020054': 'Chris Alan',
+  '2117240020055': 'Chris Melvyn Raj P',
+  '2117240020056': 'Christopher J',
+  '2117240020057': 'Darshan A R',
+  '2117240020058': 'Darshan B',
+  '2117240020059': 'Deborhal L',
+  '2117240020060': 'Deepa Shree C',
+  '2117240020061': 'Deepesh V',
+  '2117240020062': 'Deepika P'
+};
 const ADMIN_PASSWORD = '9025726185';
 const HOD_USERNAME = 'hod.cse';
 const HOD_PASSWORD = 'hod@1234';
@@ -682,7 +809,7 @@ const LeaveODContent = ({ currentTheme, darkMode }) => {
   );
 };
 
-const AttendanceContent = ({ currentTheme, darkMode }) => {
+const AttendanceContent = ({ currentTheme, darkMode, studentRegNo, authRole }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [riskFilter, setRiskFilter] = useState('all');
@@ -691,6 +818,7 @@ const AttendanceContent = ({ currentTheme, darkMode }) => {
   const attendanceData = ATTENDANCE_DATA;
 
   const filteredData = attendanceData.filter((row) => {
+    if (authRole === 'student' && studentRegNo && row.regNo !== studentRegNo) return false;
     const q = searchText.trim().toLowerCase();
     const matchesSearch = !q || [row.ccode, row.cname, row.fname].some((v) => String(v).toLowerCase().includes(q));
     const matchesRisk =
@@ -1565,7 +1693,7 @@ const CgpaCalculatorContent = ({ currentTheme, darkMode }) => {
   );
 };
 
-const SWOT_API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
+const SWOT_API_BASE = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : (import.meta.env.PROD ? '' : 'http://127.0.0.1:5001');
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -1815,9 +1943,9 @@ const SignInPage = ({ onSignIn }) => {
     } else if (userId === TEACHER_USERNAME && password === TEACHER_PASSWORD) {
       pushAuditLog({ actor: userId, type: 'login_success', message: 'Teacher login success' });
       onSignIn({ role: 'teacher' });
-    } else if (userId === '2117240020033' && password === '0123456789') {
+    } else if ((userId === '2117240020033' && password === '0123456789') || (password === userId && STUDENT_EMAIL_BY_ROLL[userId])) {
       pushAuditLog({ actor: userId, type: 'login_success', message: 'Student login success' });
-      onSignIn({ role: 'student', email: STUDENT_EMAIL_BY_ROLL[userId] || null });
+      onSignIn({ role: 'student', email: STUDENT_EMAIL_BY_ROLL[userId] || null, name: STUDENT_NAME_BY_ROLL[userId] || 'Student', regNo: userId });
     } else {
       pushAuditLog({ actor: userId || 'unknown', type: 'login_failed', message: 'Invalid login attempt' });
       setError('Invalid User ID or Password');
@@ -1862,7 +1990,7 @@ const SignInPage = ({ onSignIn }) => {
         onSignIn({ role: 'hod' });
       } else {
         pushAuditLog({ actor: '2117240020033', type: 'login_success', message: 'Student quick login success' });
-        onSignIn({ role: 'student', email: STUDENT_EMAIL_BY_ROLL['2117240020033'] || null });
+        onSignIn({ role: 'student', email: STUDENT_EMAIL_BY_ROLL['2117240020033'] || null, name: STUDENT_NAME_BY_ROLL['2117240020033'] || 'Arvind N', regNo: '2117240020033' });
       }
       setQuickLoginMode(null);
     }, 350);
@@ -2087,7 +2215,7 @@ const AdminPanel = ({ onLogout, darkMode, themeMode, onThemeModeChange, role = '
   const [hasAlertBaseline, setHasAlertBaseline] = useState(false);
   const [liveAlert, setLiveAlert] = useState(null);
   const currentTheme = darkMode ? themes.dark : themes.light;
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
+  const API_BASE = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : (import.meta.env.PROD ? '' : 'http://127.0.0.1:5001');
   const adminToken = localStorage.getItem('ADMIN_API_TOKEN') || '';
   const visibleNav = ADMIN_NAV.filter((item) => {
     if (role === 'hod') return ['hodDashboard', 'swot', 'audit', 'classroom', 'results', 'directory', 'password'].includes(item.id);
@@ -2281,7 +2409,7 @@ const AdminContentSection = ({ section, currentTheme, darkMode, onLogout, securi
   const [attendanceLockHours, setAttendanceLockHours] = useState(() => localStorage.getItem('attendance_lock_hours') || '24');
   const [hodSearch, setHodSearch] = useState('');
   
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
+  const API_BASE = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : (import.meta.env.PROD ? '' : 'http://127.0.0.1:5001');
   const adminToken = localStorage.getItem('ADMIN_API_TOKEN') || '';
   const adminHeaders = adminToken ? { 'X-Admin-Token': adminToken } : {};
   const adminFetch = (url, options = {}) => {
@@ -3434,6 +3562,8 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authRole, setAuthRole] = useState('student');
   const [studentEmail, setStudentEmail] = useState(null);
+  const [studentName, setStudentName] = useState('Student');
+  const [studentRegNo, setStudentRegNo] = useState(null);
   const [themeMode, setThemeMode] = useState('system');
   const [systemPrefersDark, setSystemPrefersDark] = useState(() =>
     window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -3523,11 +3653,26 @@ const App = () => {
   const currentIstDay = todayIST.getDate();
   const realCurrentMonth = todayIST.getMonth();
 
+  const generateStudentStats = (regNo) => {
+    if (!regNo) return { cgpa: '8.42', arrears: '0', attendance: '92', leaves: '2' };
+    if (regNo === '2117240020033') return { cgpa: '9.42', arrears: '0', attendance: '90', leaves: '2' };
+    let hash = 0;
+    for (let i = 0; i < regNo.length; i++) hash = regNo.charCodeAt(i) + ((hash << 5) - hash);
+    const prng = (seed) => { let s = Math.abs(hash + seed); return (s % 100) / 100; };
+    return {
+      cgpa: (7.0 + prng(1) * 2.5).toFixed(2),
+      arrears: Math.floor(prng(2) * 1.5).toString(),
+      attendance: Math.floor(75 + prng(3) * 24).toString(),
+      leaves: Math.floor(prng(4) * 6).toString()
+    };
+  };
+  const ds = generateStudentStats(studentRegNo);
+
   const stats = [
-    { label: 'CGPA', value: '8.42', icon: GraduationCap, colorClass: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400', shadowClass: 'shadow-blue-500/20', darkGlow: 'bg-blue-600' },
-    { label: 'Current Arrears', value: '0', icon: Sparkles, colorClass: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', shadowClass: 'shadow-emerald-500/20', darkGlow: 'bg-emerald-600' },
-    { label: 'Avg Attendance', value: '92%', icon: UserCheck, colorClass: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', shadowClass: 'shadow-indigo-500/20', darkGlow: 'bg-indigo-600', onClick: () => setActiveTab('Attendance') },
-    { label: 'Total Leaves', value: '2', icon: Clock, colorClass: 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400', shadowClass: 'shadow-orange-500/20', darkGlow: 'bg-orange-600', onClick: () => setActiveTab('Leave / OD') },
+    { label: 'CGPA', value: ds.cgpa, icon: GraduationCap, colorClass: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400', shadowClass: 'shadow-blue-500/20', darkGlow: 'bg-blue-600' },
+    { label: 'Current Arrears', value: ds.arrears, icon: Sparkles, colorClass: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', shadowClass: 'shadow-emerald-500/20', darkGlow: 'bg-emerald-600' },
+    { label: 'Avg Attendance', value: ds.attendance + '%', icon: UserCheck, colorClass: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', shadowClass: 'shadow-indigo-500/20', darkGlow: 'bg-indigo-600', onClick: () => setActiveTab('Attendance') },
+    { label: 'Total Leaves', value: ds.leaves, icon: Clock, colorClass: 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400', shadowClass: 'shadow-orange-500/20', darkGlow: 'bg-orange-600', onClick: () => setActiveTab('Leave / OD') },
   ];
   const quickActions = [
     { label: 'View Timetable', hint: 'Today + week plan', tab: 'My Timetable' },
@@ -3543,10 +3688,12 @@ const App = () => {
   if (!isAuthenticated) {
     return (
       <SignInPage
-        onSignIn={({ role, email }) => {
+        onSignIn={({ role, email, name, regNo }) => {
           setIsAuthenticated(true);
           setAuthRole(role || 'student');
           setStudentEmail(email || null);
+          setStudentName(name || (role === 'admin' ? 'Admin' : role === 'hod' ? 'HOD' : role === 'teacher' ? 'Teacher' : 'Student'));
+          setStudentRegNo(regNo || null);
         }}
       />
     );
@@ -3675,9 +3822,9 @@ const App = () => {
 
             <div className={`flex items-center gap-3 pl-2 p-1.5 rounded-full ${currentTheme.card} ${currentTheme.neoBorder} pr-4 cursor-pointer hover:shadow-md transition-shadow`}>
               <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-100 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center overflow-hidden">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Arvind&backgroundColor=transparent" alt="Avatar" className="w-full h-full object-cover" />
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(studentName)}&backgroundColor=transparent`} alt="Avatar" className="w-full h-full object-cover" />
               </div>
-              <span className={`text-sm font-semibold ${currentTheme.textPrimary} hidden sm:block`}>Arvind N.</span>
+              <span className={`text-sm font-semibold ${currentTheme.textPrimary} hidden sm:block`}>{studentName}</span>
               <ChevronDown size={14} className={currentTheme.textSecondary} />
             </div>
           </div>
@@ -3689,7 +3836,7 @@ const App = () => {
             <div className={`${currentTheme.heroGradient} rounded-[24px] md:rounded-[32px] p-6 md:p-8 mb-8`}>
               <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">Good morning, Arvind.</h1>
+                  <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">Good morning, {studentName}.</h1>
                   <p className="text-blue-100/80 text-sm mt-1">Today focus: 2 classes, no low-attendance critical alerts.</p>
                 </div>
                 <button
@@ -3867,7 +4014,7 @@ const App = () => {
 
         {/* Attendance Content Container */}
         {activeTab === 'Attendance' && (
-          <AttendanceContent currentTheme={currentTheme} darkMode={darkMode} />
+          <AttendanceContent currentTheme={currentTheme} darkMode={darkMode} studentRegNo={studentRegNo} authRole={authRole} />
         )}
 
         {/* Grade Book */}
@@ -3927,7 +4074,7 @@ const App = () => {
                   <h3 className={`${currentTheme.textPrimary} font-bold`}>Account</h3>
                   <div>
                     <label className={`${currentTheme.textSecondary} text-xs font-bold uppercase`}>Display Name</label>
-                    <input defaultValue="Arvind N." className={`mt-1 w-full px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
+                    <input defaultValue={studentName} className={`mt-1 w-full px-4 py-3 rounded-xl ${currentTheme.bg} ${currentTheme.neoBorder} ${currentTheme.textPrimary}`} />
                   </div>
                   <div>
                     <label className={`${currentTheme.textSecondary} text-xs font-bold uppercase`}>Department</label>
